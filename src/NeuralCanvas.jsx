@@ -47,9 +47,9 @@ function ParticleMatrix({ isWarped, darkMode }) {
       colorA = new THREE.Color('#94a3b8');
       colorB = new THREE.Color('#cbd5e1');
     } else {
-      // Light mode: darker, more visible particles
-      colorA = new THREE.Color('#3b82f6');
-      colorB = new THREE.Color('#6366f1');
+      // Light mode: muted steel-blue particles (less saturated)
+      colorA = new THREE.Color('#6895c8');
+      colorB = new THREE.Color('#7b7ec4');
     }
 
     for (let i = 0; i < PARTICLE_COUNT; i++) {
@@ -76,7 +76,7 @@ function ParticleMatrix({ isWarped, darkMode }) {
         size={0.028}
         sizeAttenuation={true}
         depthWrite={false}
-        opacity={darkMode ? 0.65 : 0.8}
+        opacity={darkMode ? 0.65 : 0.55}
       />
     </Points>
   );
@@ -120,8 +120,8 @@ function QuantumSphere({ loadFactor, isWarped, darkMode }) {
     }
   });
 
-  // Light mode: use a visible blue-slate color; dark mode: keep #e2e8f0
-  const meshColor = isWarped ? '#f87171' : (darkMode ? '#e2e8f0' : '#3b82f6');
+  // Light mode: muted steel-blue wireframe; dark mode: slate-white
+  const meshColor = isWarped ? '#f87171' : (darkMode ? '#e2e8f0' : '#6895c8');
 
   return (
     <Float speed={1.8} rotationIntensity={0.8} floatIntensity={1.2}>
@@ -151,7 +151,7 @@ function TorusTopology({ loadFactor, isWarped, darkMode }) {
     }
   });
 
-  const meshColor = isWarped ? '#f87171' : (darkMode ? '#cbd5e1' : '#6366f1');
+  const meshColor = isWarped ? '#f87171' : (darkMode ? '#cbd5e1' : '#7b7ec4');
 
   return (
     <Float speed={2} rotationIntensity={0.9} floatIntensity={1.3}>
@@ -181,7 +181,7 @@ function SingularityCore({ isWarped, darkMode }) {
     }
   });
 
-  const coreColor = isWarped ? '#dc2626' : (darkMode ? '#334155' : '#1e40af');
+  const coreColor = isWarped ? '#dc2626' : (darkMode ? '#334155' : '#2d4a82');
 
   return (
     <Sphere ref={coreRef} args={[0.7, 32, 32]}>
@@ -196,8 +196,8 @@ function SingularityCore({ isWarped, darkMode }) {
 }
 
 export default function NeuralCanvas({ loadFactor, isWarped, topology = 'sphere', darkMode = true }) {
-  const ringColorA = isWarped ? '#fca5a5' : (darkMode ? '#64748b' : '#3b82f6');
-  const ringColorB = isWarped ? '#f87171' : (darkMode ? '#475569' : '#6366f1');
+  const ringColorA = isWarped ? '#fca5a5' : (darkMode ? '#64748b' : '#5a7ea8');
+  const ringColorB = isWarped ? '#f87171' : (darkMode ? '#475569' : '#6a6aac');
 
   return (
     <div
