@@ -1,259 +1,378 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Activity, 
-  Terminal, 
-  ShieldCheck, 
-  Zap, 
-  Sun, 
-  Moon, 
-  CheckCircle2, 
-  AlertCircle, 
-  Play, 
-  RefreshCw
+import { useState, useEffect } from 'react';
+import NeuralCanvas from './NeuralCanvas';
+import {
+  Cpu,
+  Terminal,
+  Zap,
+  Activity,
+  Layers,
+  Sparkles,
+  Flame,
+  Radio,
+  Sliders,
+  ShieldCheck,
+  Disc,
+  ArrowUpRight,
+  TrendingUp,
+  Boxes,
+  RotateCcw
 } from 'lucide-react';
 
 export default function App() {
-  const [darkMode, setDarkMode] = useState(true);
-  const [easterEggFound, setEasterEggFound] = useState(false);
-  const [endpoints, setEndpoints] = useState([
-    { id: 1, method: 'GET', path: '/api/v1/auth/session', status: 200, latency: 28, health: 'nominal' },
-    { id: 2, method: 'POST', path: '/api/v1/payments/intent', status: 200, latency: 114, health: 'nominal' },
-    { id: 3, method: 'GET', path: '/api/v1/users/profile', status: 200, latency: 45, health: 'nominal' },
-  ]);
-  const [isSimulating, setIsSimulating] = useState(false);
+  const [loadFactor, setLoadFactor] = useState(48);
+  const [topology, setTopology] = useState('sphere');
+  const [isWarped, setIsWarped] = useState(false);
+  const [easterEggActive, setEasterEggActive] = useState(false);
+  const [tps, setTps] = useState(1840);
+  const [latency, setLatency] = useState(14.2);
+  const [activeTab, setActiveTab] = useState('live');
 
+  // Konami Code Easter Egg Listener
   useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
-
-  // Konami Code listener (Easter Egg)
-  useEffect(() => {
-    const konamiSequence = [
-      'ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown',
-      'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight',
-      'b', 'a'
-    ];
-    let currentIndex = 0;
-
-    const handleKeyDown = (e) => {
-      if (e.key === konamiSequence[currentIndex]) {
-        currentIndex++;
-        if (currentIndex === konamiSequence.length) {
-          setEasterEggFound(true);
-          currentIndex = 0;
-          setTimeout(() => setEasterEggFound(false), 5000);
+    const sequence = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+    let idx = 0;
+    const handler = (e) => {
+      if (e.key === sequence[idx]) {
+        idx++;
+        if (idx === sequence.length) {
+          setEasterEggActive(true);
+          idx = 0;
+          setTimeout(() => setEasterEggActive(false), 5000);
         }
       } else {
-        currentIndex = 0;
+        idx = 0;
       }
     };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
   }, []);
 
-  const simulateLatencySpike = () => {
-    setIsSimulating(true);
-    setEndpoints((prev) =>
-      prev.map((ep) =>
-        ep.id === 2 ? { ...ep, latency: 1420, health: 'degraded' } : ep
-      )
-    );
-    setTimeout(() => setIsSimulating(false), 600);
+  const triggerOverload = () => {
+    setIsWarped(true);
+    setLoadFactor(100);
+    setTps(5280);
+    setLatency(142.8);
+    setTimeout(() => {
+      setIsWarped(false);
+      setLoadFactor(48);
+      setTps(1840);
+      setLatency(14.2);
+    }, 4500);
   };
 
-  const simulateError = () => {
-    setIsSimulating(true);
-    setEndpoints((prev) =>
-      prev.map((ep) =>
-        ep.id === 1 ? { ...ep, status: 500, health: 'down' } : ep
-      )
-    );
-    setTimeout(() => setIsSimulating(false), 600);
-  };
-
-  const resetEndpoints = () => {
-    setIsSimulating(true);
-    setEndpoints([
-      { id: 1, method: 'GET', path: '/api/v1/auth/session', status: 200, latency: 28, health: 'nominal' },
-      { id: 2, method: 'POST', path: '/api/v1/payments/intent', status: 200, latency: 114, health: 'nominal' },
-      { id: 3, method: 'GET', path: '/api/v1/users/profile', status: 200, latency: 45, health: 'nominal' },
-    ]);
-    setTimeout(() => setIsSimulating(false), 300);
+  const resetParams = () => {
+    setIsWarped(false);
+    setLoadFactor(48);
+    setTopology('sphere');
+    setTps(1840);
+    setLatency(14.2);
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200 antialiased font-sans flex flex-col justify-between">
-      {/* Bonus Easter Egg Toast */}
-      {easterEggFound && (
-        <div className="fixed bottom-6 right-6 z-50 bg-emerald-600 text-white px-5 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-bounce">
-          <Terminal size={20} />
-          <span className="text-sm font-semibold">Bonus unlocked: Konami code detected!</span>
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-cyan-500/30 selection:text-cyan-200 relative overflow-x-hidden flex flex-col justify-between">
+      
+      {/* Dynamic Ambient Background Glows */}
+      <div className="absolute top-0 left-1/4 w-[600px] h-[350px] bg-cyan-600/15 rounded-full blur-[140px] pointer-events-none"></div>
+      <div className="absolute top-1/3 right-10 w-[500px] h-[400px] bg-indigo-600/15 rounded-full blur-[150px] pointer-events-none"></div>
+      <div className="absolute bottom-10 left-1/3 w-[600px] h-[350px] bg-pink-600/10 rounded-full blur-[160px] pointer-events-none"></div>
+
+      {/* Cyber Grid Background */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none"></div>
+
+      {/* Easter Egg Overlay Toast */}
+      {easterEggActive && (
+        <div className="fixed bottom-6 right-6 z-50 p-4 rounded-2xl bg-slate-900/90 border border-cyan-500/60 shadow-2xl shadow-cyan-500/30 flex items-center gap-3 animate-bounce backdrop-blur-xl">
+          <Terminal className="text-cyan-400" size={22} />
+          <div>
+            <p className="text-xs font-mono font-bold text-cyan-300">EASTER EGG PROTOCOL UNLOCKED</p>
+            <p className="text-[11px] text-slate-300">Konami Sequence verified: Hyper-compute shaders enabled.</p>
+          </div>
         </div>
       )}
 
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 font-bold tracking-tight text-lg">
-            <Activity className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-            <span>DevTelemetry</span>
+      {/* Glassmorphic Navbar */}
+      <header className="sticky top-0 z-40 border-b border-slate-800/80 bg-slate-950/70 backdrop-blur-2xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-18 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-gradient-to-tr from-cyan-500/20 to-indigo-500/20 border border-cyan-500/40 text-cyan-400 shadow-lg shadow-cyan-500/10">
+              <Cpu size={20} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold tracking-tight text-white font-mono text-lg bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-indigo-200">
+                  NeuralMesh
+                </span>
+                <span className="text-[9px] uppercase font-mono tracking-widest px-2 py-0.5 rounded-full bg-cyan-950/80 text-cyan-400 border border-cyan-800/80">
+                  v3.0 Ultra
+                </span>
+              </div>
+              <p className="text-[10px] text-slate-400 font-mono hidden sm:block">Hardware Accelerated Neural Substrate</p>
+            </div>
           </div>
-          <nav className="flex items-center gap-4 sm:gap-6">
-            <a href="#demo" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">
-              Live Demo
-            </a>
-            <a href="#features" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">
-              Architecture
-            </a>
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 transition cursor-pointer"
-              aria-label="Toggle Theme"
-            >
-              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
-          </nav>
-        </div>
-      </header>
 
-      {/* Hero Section */}
-      <main className="flex-grow">
-        <section className="pt-16 pb-12 sm:pt-24 sm:pb-16 max-w-4xl mx-auto px-4 sm:px-6 text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 mb-6">
-            <Zap size={14} /> Edge Telemetry for Modern Backend Stacks
-          </div>
-          <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-6">
-            Instant API observability. <br className="hidden sm:inline" />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-cyan-500 dark:from-indigo-400 dark:to-cyan-300">
-              Zero agents required.
-            </span>
-          </h1>
-          <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 mb-8 max-w-2xl mx-auto leading-relaxed">
-            Eliminate bulky server daemons. Monitor endpoint latencies, 5xx outages, and uptime regressions using zero-overhead edge probes.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a
-              href="#demo"
-              className="w-full sm:w-auto px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-sm transition text-center"
-            >
-              Test Live Sandbox
-            </a>
+          <nav className="flex items-center gap-3 sm:gap-6">
+            <div className="flex bg-slate-900/90 border border-slate-800 rounded-xl p-1 text-xs font-mono">
+              <button
+                onClick={() => setActiveTab('live')}
+                className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                  activeTab === 'live' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                3D Viewport
+              </button>
+              <button
+                onClick={() => setActiveTab('matrix')}
+                className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                  activeTab === 'matrix' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Specs & Engine
+              </button>
+            </div>
+
             <a
               href="https://github.com/rishabhtcodes"
               target="_blank"
               rel="noreferrer"
-              className="w-full sm:w-auto px-6 py-3 border border-slate-300 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 font-semibold rounded-lg flex items-center justify-center gap-2 transition"
+              className="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-800 bg-slate-900/80 hover:bg-slate-800/80 text-xs font-mono font-medium text-slate-300 hover:border-slate-700 hover:text-white transition shadow-sm"
             >
               <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
                 <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
               </svg>
-              View GitHub Source
+              <span>GitHub</span>
             </a>
-          </div>
-        </section>
+          </nav>
+        </div>
+      </header>
 
-        {/* Interactive Showcase Section */}
-        <section id="demo" className="py-12 max-w-5xl mx-auto px-4 sm:px-6">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg p-6 sm:p-8">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
-              <div>
-                <h2 className="text-lg font-bold">Interactive Endpoint Monitor</h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Click triggers to simulate real-time production anomalies</p>
+      {/* Main Content Area */}
+      <main className="relative z-10 flex-grow max-w-7xl mx-auto px-4 sm:px-6 w-full py-8 sm:py-12">
+        
+        {/* Top Hero Headline */}
+        <div className="text-center max-w-4xl mx-auto mb-10 sm:mb-14">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-mono bg-cyan-950/40 text-cyan-400 border border-cyan-500/30 mb-5 backdrop-blur-md shadow-sm">
+            <Radio size={13} className="animate-pulse text-cyan-400" />
+            <span>Interactive WebGL 3D Quantum Topology</span>
+          </div>
+
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-white mb-6 leading-[1.15]">
+            Visualizing Intelligence in <br />
+            <span className="font-cursive-hollow text-5xl sm:text-7xl md:text-8xl inline-block mt-2 transform -rotate-1 hover:rotate-0 transition duration-300">
+              Three-Dimensional Space.
+            </span>
+          </h1>
+
+          <p className="text-sm sm:text-base text-slate-400 max-w-2xl mx-auto leading-relaxed">
+            Direct GPU parametric mesh deformation. Inspect realtime cluster compute matrices, token speed, and stress warp mechanics in WebGL space.
+          </p>
+        </div>
+
+        {/* 3D Showcase Split Deck */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          
+          {/* Left / Center 3D WebGL Canvas Viewport */}
+          <div className="lg:col-span-8 space-y-4">
+            <NeuralCanvas loadFactor={loadFactor} isWarped={isWarped} topology={topology} />
+
+            {/* Quick Canvas Actions Bar */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-xl">
+                <p className="text-[10px] font-mono uppercase text-slate-500 flex items-center gap-1">
+                  <TrendingUp size={12} className="text-cyan-400" /> Token Velocity
+                </p>
+                <p className="text-base sm:text-lg font-mono font-bold text-white mt-1">{tps} <span className="text-xs text-slate-400 font-normal">tps</span></p>
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  onClick={simulateLatencySpike}
-                  disabled={isSimulating}
-                  className="px-3 py-1.5 text-xs font-medium border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 rounded hover:bg-amber-100 dark:hover:bg-amber-900/50 transition cursor-pointer flex items-center gap-1"
-                >
-                  <Play size={12} /> Inject Latency
-                </button>
-                <button
-                  onClick={simulateError}
-                  disabled={isSimulating}
-                  className="px-3 py-1.5 text-xs font-medium border border-rose-300 dark:border-rose-700 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 rounded hover:bg-rose-100 dark:hover:bg-rose-900/50 transition cursor-pointer flex items-center gap-1"
-                >
-                  <Play size={12} /> Force 500 Outage
-                </button>
-                <button
-                  onClick={resetEndpoints}
-                  disabled={isSimulating}
-                  className="px-3 py-1.5 text-xs font-medium border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition cursor-pointer flex items-center gap-1"
-                >
-                  <RefreshCw size={12} className={isSimulating ? "animate-spin" : ""} /> Reset
-                </button>
+
+              <div className="p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-xl">
+                <p className="text-[10px] font-mono uppercase text-slate-500 flex items-center gap-1">
+                  <Activity size={12} className="text-indigo-400" /> Edge Latency
+                </p>
+                <p className="text-base sm:text-lg font-mono font-bold text-cyan-300 mt-1">{latency} <span className="text-xs text-slate-400 font-normal">ms</span></p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-xl">
+                <p className="text-[10px] font-mono uppercase text-slate-500 flex items-center gap-1">
+                  <Disc size={12} className="text-pink-400" /> Active Mesh
+                </p>
+                <p className="text-base sm:text-lg font-mono font-bold text-white mt-1 capitalize">{topology}</p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-xl">
+                <p className="text-[10px] font-mono uppercase text-slate-500 flex items-center gap-1">
+                  <ShieldCheck size={12} className={isWarped ? "text-rose-400" : "text-emerald-400"} /> Health
+                </p>
+                <p className={`text-base sm:text-lg font-mono font-bold mt-1 ${isWarped ? "text-rose-400" : "text-emerald-400"}`}>
+                  {isWarped ? "STRESS" : "NOMINAL"}
+                </p>
               </div>
             </div>
+          </div>
 
-            {/* Live Endpoints Display */}
-            <div className="mt-6 divide-y divide-slate-100 dark:divide-slate-800/60 overflow-x-auto">
-              {endpoints.map((ep) => (
-                <div key={ep.id} className="py-3.5 flex items-center justify-between gap-4 min-w-[320px]">
-                  <div className="flex items-center gap-3">
-                    <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
-                      ep.method === 'POST' ? 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
-                    }`}>
-                      {ep.method}
-                    </span>
-                    <span className="font-mono text-xs sm:text-sm">{ep.path}</span>
+          {/* Right Control & Parameter Deck */}
+          <div className="lg:col-span-4 space-y-4">
+            <div className="p-6 rounded-3xl border border-slate-800 bg-slate-900/80 backdrop-blur-2xl shadow-2xl space-y-6">
+              
+              {/* Header */}
+              <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+                    <Sliders size={16} />
                   </div>
-
-                  <div className="flex items-center gap-4">
-                    <span className={`text-xs font-mono ${ep.latency > 500 ? 'text-amber-500 font-bold' : 'text-slate-500 dark:text-slate-400'}`}>
-                      {ep.latency} ms
-                    </span>
-                    <span className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full ${
-                      ep.status === 200 
-                        ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
-                        : 'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
-                    }`}>
-                      {ep.status === 200 ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
-                      {ep.status} {ep.status === 200 ? 'OK' : 'ERR'}
-                    </span>
+                  <div>
+                    <h3 className="text-sm font-bold text-white font-mono">Neural Control Hub</h3>
+                    <p className="text-[11px] text-slate-400">Live Parametric Modulation</p>
                   </div>
                 </div>
-              ))}
+
+                <button
+                  onClick={resetParams}
+                  className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer"
+                  title="Reset Parameters"
+                >
+                  <RotateCcw size={14} />
+                </button>
+              </div>
+
+              {/* Topology Selector */}
+              <div className="space-y-2">
+                <label className="text-xs font-mono text-slate-300 flex items-center justify-between">
+                  <span>Topology Geometry</span>
+                  <span className="text-[10px] text-cyan-400 font-mono">3D Shader Model</span>
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => setTopology('sphere')}
+                    className={`py-2.5 px-3 rounded-xl font-mono text-xs border transition flex items-center justify-center gap-2 cursor-pointer ${
+                      topology === 'sphere'
+                        ? 'border-cyan-500/60 bg-cyan-500/20 text-cyan-300 shadow-md shadow-cyan-500/10'
+                        : 'border-slate-800 bg-slate-950/60 text-slate-400 hover:border-slate-700'
+                    }`}
+                  >
+                    <Boxes size={14} /> Quantum Sphere
+                  </button>
+
+                  <button
+                    onClick={() => setTopology('knot')}
+                    className={`py-2.5 px-3 rounded-xl font-mono text-xs border transition flex items-center justify-center gap-2 cursor-pointer ${
+                      topology === 'knot'
+                        ? 'border-indigo-500/60 bg-indigo-500/20 text-indigo-300 shadow-md shadow-indigo-500/10'
+                        : 'border-slate-800 bg-slate-950/60 text-slate-400 hover:border-slate-700'
+                    }`}
+                  >
+                    <Disc size={14} /> Torus Knot
+                  </button>
+                </div>
+              </div>
+
+              {/* Tensor Load Slider */}
+              <div className="space-y-3">
+                <div className="flex justify-between text-xs font-mono text-slate-300">
+                  <span className="flex items-center gap-1.5"><Zap size={13} className="text-cyan-400" /> Tensor Mesh Distortion</span>
+                  <span className="text-cyan-400 font-bold font-mono">{loadFactor}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="10"
+                  max="100"
+                  value={loadFactor}
+                  onChange={(e) => setLoadFactor(Number(e.target.value))}
+                  className="w-full accent-cyan-400 bg-slate-950 h-2.5 rounded-lg cursor-pointer border border-slate-800"
+                />
+                <div className="flex justify-between text-[10px] font-mono text-slate-500">
+                  <span>10% (Low Noise)</span>
+                  <span>100% (High Entropy)</span>
+                </div>
+              </div>
+
+              {/* Stress Inject Action */}
+              <div className="pt-2">
+                <button
+                  onClick={triggerOverload}
+                  disabled={isWarped}
+                  className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-rose-500 via-pink-600 to-indigo-600 hover:from-rose-600 hover:to-indigo-700 text-white text-xs font-mono font-bold tracking-wider transition flex items-center justify-center gap-2 cursor-pointer shadow-xl shadow-rose-500/25 disabled:opacity-50"
+                >
+                  <Flame size={16} /> Inject Matrix Overload Stress
+                </button>
+              </div>
+
+              {/* Live Shaders Telemetry Log */}
+              <div className="p-3.5 rounded-2xl bg-slate-950/90 border border-slate-800/80 font-mono text-[11px] space-y-1.5">
+                <div className="flex justify-between text-slate-400">
+                  <span>GL Context</span>
+                  <span className="text-cyan-400">WebGL 2.0 (Active)</span>
+                </div>
+                <div className="flex justify-between text-slate-400">
+                  <span>Shader Pass</span>
+                  <span className="text-indigo-400">Additive Wireframe</span>
+                </div>
+                <div className="flex justify-between text-slate-400">
+                  <span>FPS Buffer</span>
+                  <span className="text-emerald-400">60.0 FPS Sync</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+        {/* Feature Grid / Architectural Pillars */}
+        <section className="mt-16 pt-12 border-t border-slate-800/80">
+          <div className="text-center max-w-2xl mx-auto mb-10">
+            <h2 className="text-2xl font-bold font-mono text-white">Engine Architecture</h2>
+            <p className="text-xs text-slate-400 mt-1">Built with WebGL, Three.js, React Fiber, and Tailwind CSS.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="p-6 rounded-3xl border border-slate-800 bg-slate-900/40 backdrop-blur-xl hover:border-cyan-500/40 transition group">
+              <div className="p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 w-fit mb-4 group-hover:scale-110 transition">
+                <Layers size={22} />
+              </div>
+              <h3 className="font-bold text-base text-white mb-2 font-mono flex items-center justify-between">
+                <span>Multi-Layer Topology</span>
+                <ArrowUpRight size={14} className="text-slate-500 group-hover:text-cyan-400 transition" />
+              </h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Seamlessly renders nested outer orbital telemetry rings, particle cloud nebulae, and high-frequency inner cores.
+              </p>
+            </div>
+
+            <div className="p-6 rounded-3xl border border-slate-800 bg-slate-900/40 backdrop-blur-xl hover:border-indigo-500/40 transition group">
+              <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 w-fit mb-4 group-hover:scale-110 transition">
+                <Sparkles size={22} />
+              </div>
+              <h3 className="font-bold text-base text-white mb-2 font-mono flex items-center justify-between">
+                <span>Particle Field Shaders</span>
+                <ArrowUpRight size={14} className="text-slate-500 group-hover:text-indigo-400 transition" />
+              </h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Hardware-accelerated additive blending point particles with dynamic spherical distribution and continuous rotational inertia.
+              </p>
+            </div>
+
+            <div className="p-6 rounded-3xl border border-slate-800 bg-slate-900/40 backdrop-blur-xl hover:border-pink-500/40 transition group">
+              <div className="p-3 rounded-xl bg-pink-500/10 border border-pink-500/30 text-pink-400 w-fit mb-4 group-hover:scale-110 transition">
+                <Terminal size={22} />
+              </div>
+              <h3 className="font-bold text-base text-white mb-2 font-mono flex items-center justify-between">
+                <span>Real-Time Stress Sim</span>
+                <ArrowUpRight size={14} className="text-slate-500 group-hover:text-pink-400 transition" />
+              </h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Triggers parametric deformation distortions and color shifts dynamically across materials during cluster stress.
+              </p>
             </div>
           </div>
         </section>
 
-        {/* Feature Grid */}
-        <section id="features" className="py-12 max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="p-6 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50">
-              <Terminal className="h-6 w-6 text-indigo-500 mb-4" />
-              <h3 className="font-bold text-base mb-2">Agentless Ping Probes</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                Probe endpoints externally across multi-region networks without injecting heavy runtime packages into your codebase.
-              </p>
-            </div>
-            <div className="p-6 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50">
-              <Zap className="h-6 w-6 text-indigo-500 mb-4" />
-              <h3 className="font-bold text-base mb-2">Instant Degradation Alerts</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                Dispatch webhooks to Slack, Discord, or custom endpoints the millisecond consecutive requests cross SLA thresholds.
-              </p>
-            </div>
-            <div className="p-6 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50">
-              <ShieldCheck className="h-6 w-6 text-indigo-500 mb-4" />
-              <h3 className="font-bold text-base mb-2">Zero Payload Overhead</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                Operates entirely on standard HTTP status inspections, requiring zero access to internal application memory or database records.
-              </p>
-            </div>
-          </div>
-        </section>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-200 dark:border-slate-800 py-8 text-center text-xs text-slate-500 dark:text-slate-400">
-        <p>© 2026 DevTelemetry. Built with React & Tailwind CSS.</p>
-        <p className="mt-1">Bonus: Press ↑ ↑ ↓ ↓ ← → ← → B A on your keyboard.</p>
+      {/* Futuristic Footer */}
+      <footer className="border-t border-slate-800/80 bg-slate-950 py-8 text-center text-xs font-mono text-slate-500">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p>© 2026 NeuralMesh // 3D Quantum Telemetry Core.</p>
+          <p className="text-slate-400">Bonus: Press ↑ ↑ ↓ ↓ ← → ← → B A on your keyboard.</p>
+        </div>
       </footer>
     </div>
   );
