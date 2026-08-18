@@ -21,13 +21,23 @@ for (let i = 0; i < PARTICLE_COUNT; i++) {
 }
 
 // Minimalist Refined Particle Constellation
-function ParticleMatrix({ isWarped }) {
+function ParticleMatrix({ isWarped, darkMode }) {
   const pointsRef = useRef();
 
   const colors = useMemo(() => {
     const col = new Float32Array(PARTICLE_COUNT * 3);
-    const colorA = new THREE.Color(isWarped ? "#f87171" : "#94a3b8");
-    const colorB = new THREE.Color(isWarped ? "#ef4444" : "#cbd5e1");
+    let colorA, colorB;
+    if (isWarped) {
+      colorA = new THREE.Color('#f87171');
+      colorB = new THREE.Color('#ef4444');
+    } else if (darkMode) {
+      colorA = new THREE.Color('#94a3b8');
+      colorB = new THREE.Color('#cbd5e1');
+    } else {
+      // Light mode: darker, more visible particles
+      colorA = new THREE.Color('#3b82f6');
+      colorB = new THREE.Color('#6366f1');
+    }
 
     for (let i = 0; i < PARTICLE_COUNT; i++) {
       const mixedColor = colorA.clone().lerp(colorB, PARTICLE_RANDOMS[i]);
@@ -36,7 +46,7 @@ function ParticleMatrix({ isWarped }) {
       col[i * 3 + 2] = mixedColor.b;
     }
     return col;
-  }, [isWarped]);
+  }, [isWarped, darkMode]);
 
   useFrame((_, delta) => {
     if (pointsRef.current) {
@@ -50,10 +60,10 @@ function ParticleMatrix({ isWarped }) {
       <PointMaterial
         transparent
         vertexColors
-        size={0.025}
+        size={0.028}
         sizeAttenuation={true}
         depthWrite={false}
-        opacity={0.65}
+        opacity={darkMode ? 0.65 : 0.8}
       />
     </Points>
   );
@@ -77,7 +87,7 @@ function OrbitalRing({ radius, speed, color, tilt = 0 }) {
           color={color}
           wireframe={false}
           transparent
-          opacity={0.45}
+          opacity={0.55}
           roughness={0.4}
         />
       </Torus>
@@ -86,7 +96,7 @@ function OrbitalRing({ radius, speed, color, tilt = 0 }) {
 }
 
 // Elegant Wireframe Core (Sphere Topology)
-function QuantumSphere({ loadFactor, isWarped }) {
+function QuantumSphere({ loadFactor, isWarped, darkMode }) {
   const meshRef = useRef();
 
   useFrame((_, delta) => {
@@ -97,11 +107,14 @@ function QuantumSphere({ loadFactor, isWarped }) {
     }
   });
 
+  // Light mode: use a visible blue-slate color; dark mode: keep #e2e8f0
+  const meshColor = isWarped ? '#f87171' : (darkMode ? '#e2e8f0' : '#3b82f6');
+
   return (
     <Float speed={1.8} rotationIntensity={0.8} floatIntensity={1.2}>
       <Sphere ref={meshRef} args={[1.7, 48, 48]} scale={1.1}>
         <MeshDistortMaterial
-          color={isWarped ? "#f87171" : "#e2e8f0"}
+          color={meshColor}
           attach="material"
           distort={isWarped ? 0.65 : 0.22 + (loadFactor / 350)}
           speed={isWarped ? 3.5 : 1.6}
@@ -115,7 +128,7 @@ function QuantumSphere({ loadFactor, isWarped }) {
 }
 
 // Torus Knot Topology
-function TorusTopology({ loadFactor, isWarped }) {
+function TorusTopology({ loadFactor, isWarped, darkMode }) {
   const knotRef = useRef();
 
   useFrame((_, delta) => {
@@ -125,12 +138,14 @@ function TorusTopology({ loadFactor, isWarped }) {
     }
   });
 
+  const meshColor = isWarped ? '#f87171' : (darkMode ? '#cbd5e1' : '#6366f1');
+
   return (
     <Float speed={2} rotationIntensity={0.9} floatIntensity={1.3}>
       <mesh ref={knotRef} scale={1.05}>
         <torusKnotGeometry args={[1.15, 0.3, 100, 24]} />
         <MeshWobbleMaterial
-          color={isWarped ? "#f87171" : "#cbd5e1"}
+          color={meshColor}
           attach="material"
           factor={isWarped ? 0.8 : 0.25 + loadFactor / 300}
           speed={isWarped ? 4.0 : 1.8}
@@ -144,7 +159,7 @@ function TorusTopology({ loadFactor, isWarped }) {
 }
 
 // Subtle Internal Core
-function SingularityCore({ isWarped }) {
+function SingularityCore({ isWarped, darkMode }) {
   const coreRef = useRef();
 
   useFrame((_, delta) => {
@@ -153,10 +168,12 @@ function SingularityCore({ isWarped }) {
     }
   });
 
+  const coreColor = isWarped ? '#dc2626' : (darkMode ? '#334155' : '#1e40af');
+
   return (
     <Sphere ref={coreRef} args={[0.7, 32, 32]}>
       <meshStandardMaterial
-        color={isWarped ? "#dc2626" : "#334155"}
+        color={coreColor}
         wireframe={false}
         roughness={0.4}
         metalness={0.7}
@@ -165,49 +182,68 @@ function SingularityCore({ isWarped }) {
   );
 }
 
-export default function NeuralCanvas({ loadFactor, isWarped, topology = 'sphere' }) {
+export default function NeuralCanvas({ loadFactor, isWarped, topology = 'sphere', darkMode = true }) {
+  // Canvas bg: dark mode = deep slate, light mode = clean off-white
+  const canvasBg = darkMode ? '#0b1020' : '#f1f5f9';
+  const ringColorA = isWarped ? '#fca5a5' : (darkMode ? '#64748b' : '#3b82f6');
+  const ringColorB = isWarped ? '#f87171' : (darkMode ? '#475569' : '#6366f1');
+
   return (
-    <div className="w-full h-[460px] sm:h-[520px] cursor-grab active:cursor-grabbing relative rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800/80 bg-slate-900/60 dark:bg-slate-950/80 shadow-lg group transition">
+    <div className="w-full h-[460px] sm:h-[520px] cursor-grab active:cursor-grabbing relative rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800/80 shadow-lg group transition">
       
       {/* HUD Top Status Bar */}
       <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between pointer-events-none">
-        <div className="flex items-center gap-2 font-mono text-[11px] text-slate-300 bg-slate-900/90 px-3 py-1.5 rounded-lg border border-slate-700/80 backdrop-blur-md shadow-sm">
-          <span className={`w-2 h-2 rounded-full ${isWarped ? 'bg-rose-400' : 'bg-blue-400'} animate-pulse`}></span>
+        <div className={`flex items-center gap-2 font-mono text-[11px] px-3 py-1.5 rounded-lg border backdrop-blur-md shadow-sm ${
+          darkMode
+            ? 'text-slate-300 bg-slate-900/90 border-slate-700/80'
+            : 'text-slate-700 bg-white/90 border-slate-300'
+        }`}>
+          <span className={`w-2 h-2 rounded-full ${isWarped ? 'bg-rose-400' : 'bg-blue-500'} animate-pulse`}></span>
           <span>GPU Compute Viewport • Interactive</span>
         </div>
 
-        <div className="font-mono text-[10px] text-slate-400 bg-slate-900/90 px-3 py-1.5 rounded-lg border border-slate-800 backdrop-blur-md hidden sm:block">
+        <div className={`font-mono text-[10px] px-3 py-1.5 rounded-lg border backdrop-blur-md hidden sm:block ${
+          darkMode
+            ? 'text-slate-400 bg-slate-900/90 border-slate-800'
+            : 'text-slate-500 bg-white/90 border-slate-300'
+        }`}>
           Drag: Orbit • Scroll: Zoom
         </div>
       </div>
 
       {/* Clean Studio Lighting Context */}
-      <Canvas camera={{ position: [0, 0, 5.0], fov: 46 }} className="w-full h-full">
-        {/* Soft, warm & cool key lights (Studio photography lighting style) */}
-        <ambientLight intensity={0.9} />
-        <directionalLight position={[6, 8, 5]} intensity={1.5} color="#f8fafc" />
-        <directionalLight position={[-6, -4, -3]} intensity={0.6} color="#94a3b8" />
+      <Canvas
+        camera={{ position: [0, 0, 5.0], fov: 46 }}
+        className="w-full h-full"
+        gl={{ alpha: false }}
+        onCreated={({ gl }) => {
+          gl.setClearColor(canvasBg, 1);
+        }}
+      >
+        {/* Adaptive Studio Lighting */}
+        <ambientLight intensity={darkMode ? 0.9 : 1.4} />
+        <directionalLight position={[6, 8, 5]} intensity={darkMode ? 1.5 : 2.0} color={darkMode ? '#f8fafc' : '#ffffff'} />
+        <directionalLight position={[-6, -4, -3]} intensity={darkMode ? 0.6 : 0.8} color={darkMode ? '#94a3b8' : '#e0e7ff'} />
 
         {/* Ambient Subtle Particles */}
-        <ParticleMatrix isWarped={isWarped} />
+        <ParticleMatrix isWarped={isWarped} darkMode={darkMode} />
 
         {/* Outer Orbital Telemetry Rings */}
-        <OrbitalRing radius={2.5} speed={0.25} color={isWarped ? "#fca5a5" : "#64748b"} tilt={0.6} />
-        <OrbitalRing radius={2.8} speed={-0.2} color={isWarped ? "#f87171" : "#475569"} tilt={-0.5} />
+        <OrbitalRing radius={2.5} speed={0.25} color={ringColorA} tilt={0.6} />
+        <OrbitalRing radius={2.8} speed={-0.2} color={ringColorB} tilt={-0.5} />
 
         {/* Chosen Dynamic Topology */}
         {topology === 'knot' ? (
-          <TorusTopology loadFactor={loadFactor} isWarped={isWarped} />
+          <TorusTopology loadFactor={loadFactor} isWarped={isWarped} darkMode={darkMode} />
         ) : (
-          <QuantumSphere loadFactor={loadFactor} isWarped={isWarped} />
+          <QuantumSphere loadFactor={loadFactor} isWarped={isWarped} darkMode={darkMode} />
         )}
 
         {/* Center Core */}
-        <SingularityCore isWarped={isWarped} />
+        <SingularityCore isWarped={isWarped} darkMode={darkMode} />
 
         <OrbitControls enableZoom={true} enablePan={false} autoRotate autoRotateSpeed={isWarped ? 1.8 : 0.6} />
       </Canvas>
     </div>
   );
 }
-
