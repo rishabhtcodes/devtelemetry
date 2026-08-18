@@ -10,7 +10,7 @@ function CanvasBackground({ darkMode, isWarped }) {
     let color;
     if (isWarped) color = '#080010';
     else if (darkMode) color = '#080e1c';
-    else color = '#eef2ff'; // soft indigo-white for light mode
+    else color = '#0d1117'; // deep graphite (GitHub dark) for light mode canvas
     gl.setClearColor(color, 1);
   }, [gl, darkMode, isWarped]);
   return null;
@@ -202,7 +202,7 @@ export default function NeuralCanvas({ loadFactor, isWarped, topology = 'sphere'
   return (
     <div
       className="w-full h-[460px] sm:h-[520px] cursor-grab active:cursor-grabbing relative rounded-2xl overflow-hidden shadow-lg group transition"
-      style={{ border: `1px solid ${darkMode ? '#1e293b' : '#c7d2fe'}` }}
+      style={{ border: `1px solid ${darkMode ? '#1e293b' : '#1c2333'}` }}
     >
       
       {/* HUD Top Status Bar */}
