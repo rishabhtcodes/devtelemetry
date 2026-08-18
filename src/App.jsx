@@ -186,14 +186,23 @@ export default function App() {
 
   return (
     <div className={`min-h-screen font-sans selection:bg-blue-500/20 selection:text-blue-300 relative overflow-x-hidden flex flex-col justify-between transition-colors duration-300 ${
-      darkMode ? 'bg-[#0b0f19] text-slate-100' : 'bg-slate-50 text-slate-900'
+      darkMode ? 'bg-[#0b0f19] text-slate-100' : 'bg-[#f8faff] text-slate-900'
     }`}>
       
-      {/* Subtle, Sophisticated Enterprise Ambient Lights */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[720px] h-[360px] bg-blue-600/10 dark:bg-blue-600/10 rounded-full blur-[140px] pointer-events-none"></div>
+      {/* Ambient glow — adapts per theme */}
+      <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] rounded-full blur-[160px] pointer-events-none ${
+        darkMode ? 'bg-blue-600/10' : 'bg-blue-400/12'
+      }`}></div>
+      <div className={`absolute top-60 right-0 w-[400px] h-[400px] rounded-full blur-[120px] pointer-events-none ${
+        darkMode ? 'bg-indigo-600/5' : 'bg-indigo-400/8'
+      }`}></div>
 
-      {/* Modern Grid Background */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(150,150,150,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(150,150,150,0.03)_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:3.5rem_3.5rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none"></div>
+      {/* Subtle Grid */}
+      <div className={`absolute inset-0 bg-[size:3.5rem_3.5rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none ${
+        darkMode
+          ? 'bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)]'
+          : 'bg-[linear-gradient(to_right,rgba(100,116,139,0.07)_1px,transparent_1px),linear-gradient(to_bottom,rgba(100,116,139,0.07)_1px,transparent_1px)]'
+      }`}></div>
 
       {/* Easter Egg Overlay Toast */}
       {easterEggActive && (
@@ -207,7 +216,9 @@ export default function App() {
       )}
 
       {/* Glassmorphic Navbar */}
-      <header className="sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800/80 bg-white/80 dark:bg-[#0b0f19]/80 backdrop-blur-xl transition-colors">
+      <header className={`sticky top-0 z-40 border-b backdrop-blur-xl transition-colors ${
+        darkMode ? 'border-slate-800/80 bg-[#0b0f19]/80' : 'border-slate-200/80 bg-white/90 shadow-sm'
+      }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 shadow-sm">
@@ -264,7 +275,7 @@ export default function App() {
       <main className="relative z-10 flex-grow max-w-7xl mx-auto px-4 sm:px-6 w-full py-10 sm:py-16 space-y-16 sm:space-y-24">
         
         {/* Hero Section */}
-        <section className="text-center max-w-4xl mx-auto">
+        <section className="text-center max-w-4xl mx-auto pt-4">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-mono bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700/80 mb-6 backdrop-blur-md shadow-sm">
             <Radio size={13} className="text-blue-500" />
             <span>Deterministic Edge Observability • Zero Daemons</span>
@@ -284,14 +295,22 @@ export default function App() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
               href="#demo-live"
-              className="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-500 font-semibold shadow-md transition font-mono text-sm flex items-center justify-center gap-2"
+              className={`w-full sm:w-auto px-7 py-3.5 rounded-xl font-semibold shadow-md transition font-mono text-sm flex items-center justify-center gap-2 ${
+                darkMode
+                  ? 'bg-blue-600 hover:bg-blue-500 text-white'
+                  : 'bg-slate-900 hover:bg-slate-800 text-white'
+              }`}
             >
               <Zap size={16} /> Test Live Sandbox
             </a>
 
             <button
               onClick={copyCurl}
-              className="w-full sm:w-auto px-5 py-3.5 rounded-xl border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 font-mono text-xs transition flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+              className={`w-full sm:w-auto px-5 py-3.5 rounded-xl border font-mono text-xs transition flex items-center justify-center gap-2 shadow-sm cursor-pointer ${
+                darkMode
+                  ? 'border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-200'
+                  : 'border-slate-300 bg-white hover:bg-slate-50 text-slate-700'
+              }`}
             >
               {copiedCode ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
               <span className="truncate max-w-[240px]">curl -s https://devtelemetry.io/probe</span>
@@ -301,10 +320,14 @@ export default function App() {
 
         {/* Section 1: Live Interactive Product Demo (The Real Product) */}
         <section id="demo-live" className="scroll-mt-24">
-          <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 shadow-xl overflow-hidden backdrop-blur-xl">
+          <div className={`rounded-3xl border shadow-xl overflow-hidden backdrop-blur-xl ${
+            darkMode ? 'border-slate-800 bg-slate-900/90' : 'border-slate-200 bg-white'
+          }`}>
             
             {/* Terminal Header */}
-            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className={`px-6 py-4 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+              darkMode ? 'border-slate-800 bg-slate-950/80' : 'border-slate-200 bg-slate-50'
+            }`}>
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1.5">
                   <div className="w-3 h-3 rounded-full bg-rose-500"></div>
@@ -343,7 +366,9 @@ export default function App() {
             </div>
 
             {/* Split Console Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-slate-200 dark:divide-slate-800">
+            <div className={`grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x ${
+              darkMode ? 'divide-slate-800' : 'divide-slate-200'
+            }`}>
               
               {/* Left Column: Monitored Endpoints List */}
               <div className="lg:col-span-5 p-4 sm:p-6 space-y-3">
@@ -482,36 +507,44 @@ export default function App() {
             
             {/* 3D Canvas */}
             <div className="lg:col-span-8 space-y-4">
-              <NeuralCanvas loadFactor={loadFactor} isWarped={isWarped} topology={topology} />
+              <NeuralCanvas loadFactor={loadFactor} isWarped={isWarped} topology={topology} darkMode={darkMode} />
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 shadow-sm">
-                  <p className="text-[10px] font-mono uppercase text-slate-600 dark:text-slate-400 flex items-center gap-1">
+                <div className={`p-3.5 rounded-xl border shadow-sm ${
+                  darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200'
+                }`}>
+                  <p className="text-[10px] font-mono uppercase text-slate-500 dark:text-slate-400 flex items-center gap-1">
                     <TrendingUp size={12} className="text-blue-500" /> Token Velocity
                   </p>
-                  <p className="text-base font-mono font-bold dark:text-white text-slate-900 mt-1">{tps} <span className="text-xs text-slate-500 dark:text-slate-400 font-normal">tps</span></p>
+                  <p className="text-base font-mono font-bold text-slate-900 dark:text-white mt-1">{tps} <span className="text-xs text-slate-400 font-normal">tps</span></p>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 shadow-sm">
-                  <p className="text-[10px] font-mono uppercase text-slate-600 dark:text-slate-400 flex items-center gap-1">
+                <div className={`p-3.5 rounded-xl border shadow-sm ${
+                  darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200'
+                }`}>
+                  <p className="text-[10px] font-mono uppercase text-slate-500 dark:text-slate-400 flex items-center gap-1">
                     <Activity size={12} className="text-indigo-500" /> Edge Latency
                   </p>
-                  <p className="text-base font-mono font-bold text-blue-600 dark:text-blue-400 mt-1">{latency} <span className="text-xs text-slate-500 dark:text-slate-400 font-normal">ms</span></p>
+                  <p className="text-base font-mono font-bold text-blue-600 dark:text-blue-400 mt-1">{latency} <span className="text-xs text-slate-400 font-normal">ms</span></p>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 shadow-sm">
-                  <p className="text-[10px] font-mono uppercase text-slate-600 dark:text-slate-400 flex items-center gap-1">
-                    <Disc size={12} className="text-slate-500 dark:text-slate-400" /> Mesh Geometry
+                <div className={`p-3.5 rounded-xl border shadow-sm ${
+                  darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200'
+                }`}>
+                  <p className="text-[10px] font-mono uppercase text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                    <Disc size={12} className="text-slate-400" /> Mesh Geometry
                   </p>
-                  <p className="text-base font-mono font-bold dark:text-white text-slate-900 mt-1 capitalize">{topology}</p>
+                  <p className="text-base font-mono font-bold text-slate-900 dark:text-white mt-1 capitalize">{topology}</p>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 shadow-sm">
-                  <p className="text-[10px] font-mono uppercase text-slate-600 dark:text-slate-400 flex items-center gap-1">
-                    <ShieldCheck size={12} className={isWarped ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"} /> Core Health
+                <div className={`p-3.5 rounded-xl border shadow-sm ${
+                  darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200'
+                }`}>
+                  <p className="text-[10px] font-mono uppercase text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                    <ShieldCheck size={12} className={isWarped ? 'text-rose-500' : 'text-emerald-500'} /> Core Health
                   </p>
-                  <p className={`text-base font-mono font-bold mt-1 ${isWarped ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"}`}>
-                    {isWarped ? "OVERLOAD" : "NOMINAL"}
+                  <p className={`text-base font-mono font-bold mt-1 ${isWarped ? 'text-rose-500' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                    {isWarped ? 'OVERLOAD' : 'NOMINAL'}
                   </p>
                 </div>
               </div>
@@ -519,7 +552,9 @@ export default function App() {
 
             {/* 3D Controls */}
             <div className="lg:col-span-4 space-y-4">
-              <div className="p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 shadow-md space-y-6">
+              <div className={`p-6 rounded-2xl border shadow-md space-y-6 ${
+                darkMode ? 'border-slate-800 bg-slate-900/80' : 'border-slate-200 bg-white'
+              }`}>
                 
                 <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
                   <div className="flex items-center gap-2">
@@ -581,7 +616,9 @@ export default function App() {
                 <button
                   onClick={trigger3DOverload}
                   disabled={isWarped}
-                  className="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-rose-600 dark:hover:bg-rose-500 text-xs font-mono font-bold tracking-wider transition flex items-center justify-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
+                  className={`w-full py-3 px-4 rounded-xl text-xs font-mono font-bold tracking-wider transition flex items-center justify-center gap-2 cursor-pointer shadow-sm disabled:opacity-50 text-white ${
+                    darkMode ? 'bg-rose-600 hover:bg-rose-500' : 'bg-slate-900 hover:bg-slate-800'
+                  }`}
                 >
                   <Flame size={16} /> Inject Matrix Overload Stress
                 </button>
@@ -599,7 +636,9 @@ export default function App() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 shadow-sm backdrop-blur-xl">
+            <div className={`p-6 rounded-2xl border shadow-sm backdrop-blur-xl ${
+              darkMode ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-white'
+            }`}>
               <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 w-fit mb-4">
                 <Layers size={22} />
               </div>
@@ -612,8 +651,12 @@ export default function App() {
               </p>
             </div>
 
-            <div className="p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 shadow-sm backdrop-blur-xl">
-              <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 w-fit mb-4">
+            <div className={`p-6 rounded-2xl border shadow-sm backdrop-blur-xl ${
+              darkMode ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-white'
+            }`}>
+              <div className={`p-3 rounded-xl border w-fit mb-4 ${
+                darkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
+              }`}>
                 <Sparkles size={22} />
               </div>
               <h3 className="font-bold text-base text-slate-900 dark:text-white mb-2 font-mono flex items-center justify-between">
@@ -625,7 +668,9 @@ export default function App() {
               </p>
             </div>
 
-            <div className="p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 shadow-sm backdrop-blur-xl">
+            <div className={`p-6 rounded-2xl border shadow-sm backdrop-blur-xl ${
+              darkMode ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-white'
+            }`}>
               <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 w-fit mb-4">
                 <Code2 size={22} />
               </div>
@@ -643,7 +688,9 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-950 py-8 text-center text-xs font-mono text-slate-500">
+      <footer className={`border-t py-8 text-center text-xs font-mono ${
+        darkMode ? 'border-slate-800/80 bg-slate-950 text-slate-500' : 'border-slate-200 bg-white text-slate-500'
+      }`}>
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p>© 2026 DevTelemetry // Crafted for Acdyon Technologies Frontend Challenge.</p>
           <p className="text-slate-600 dark:text-slate-400">Bonus Keybind: Press ↑ ↑ ↓ ↓ ← → ← → B A on keyboard.</p>
