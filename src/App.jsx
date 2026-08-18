@@ -123,7 +123,7 @@ export default function App() {
   };
 
   const copyCurl = () => {
-    navigator.clipboard?.writeText('curl -s https://devtelemetry.io/v1/ping/sandbox -H "X-Probe-Key: live_demo"');
+    navigator.clipboard?.writeText('curl -s https://httpbin.org/get?probe=live_demo -H "X-Probe-Key: live_demo"');
     setCopiedCode(true);
     setTimeout(() => setCopiedCode(false), 2000);
   };
@@ -270,7 +270,7 @@ export default function App() {
               style={{ background: darkMode ? '#0f172a' : '#ffffff', borderColor: darkMode ? '#334155' : '#e2e8f0', color: t.subtext }}
             >
               {copiedCode ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
-              <span className="truncate max-w-[220px] sm:max-w-xs">curl -s https://devtelemetry.io/probe</span>
+              <span className="truncate max-w-[220px] sm:max-w-xs">curl -s https://httpbin.org/get?probe=live_demo</span>
             </button>
           </div>
         </section>
