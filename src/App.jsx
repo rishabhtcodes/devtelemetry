@@ -34,56 +34,57 @@ const INITIAL_ENDPOINTS = [
   { id: 4, name: 'Timeline Cache Layer', method: 'GET', path: '/api/v1/feed/cache', status: 200, latency: 16, history: [14, 18, 15, 17, 16, 16], payload: '2.1 KB', region: 'sin-1' },
 ];
 
-export default function App() {
-  // Theme State
-  const [darkMode, setDarkMode] = useState(true);
+// Central theme tokens — derive all colors from darkMode boolean
+function useTheme(darkMode) {
+  return {
+    bg: darkMode ? '#0b0f19' : '#f8faff',
+    text: darkMode ? '#f1f5f9' : '#0f172a',
+    subtext: darkMode ? '#94a3b8' : '#475569',
+    muted: darkMode ? '#64748b' : '#94a3b8',
+    card: darkMode ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200',
+    cardSolid: darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200',
+    cardInner: darkMode ? 'bg-slate-950/60 border-slate-800' : 'bg-slate-50 border-slate-200',
+    header: darkMode ? 'bg-[#0b0f19]/85 border-slate-800/80' : 'bg-white/92 border-slate-200/80 shadow-sm',
+    divide: darkMode ? 'divide-slate-800' : 'divide-slate-200',
+    border: darkMode ? 'border-slate-800' : 'border-slate-200',
+    borderTop: darkMode ? 'border-t border-slate-800' : 'border-t border-slate-200',
+    label: darkMode ? 'text-slate-400' : 'text-slate-500',
+    heading: darkMode ? 'text-white' : 'text-slate-900',
+    bodyText: darkMode ? 'text-slate-300' : 'text-slate-600',
+  };
+}
 
-  // 3D Matrix & Compute State
+export default function App() {
+  const [darkMode, setDarkMode] = useState(true);
   const [loadFactor, setLoadFactor] = useState(45);
   const [topology, setTopology] = useState('sphere');
   const [isWarped, setIsWarped] = useState(false);
   const [tps, setTps] = useState(1840);
   const [latency, setLatency] = useState(14.2);
-
-  // Live Endpoints State
   const [endpoints, setEndpoints] = useState(INITIAL_ENDPOINTS);
   const [selectedEndpointId, setSelectedEndpointId] = useState(1);
   const [isInjectingProbe, setIsInjectingProbe] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
-
-  // Real-time Event Stream
+  const [easterEggActive, setEasterEggActive] = useState(false);
   const [eventLogs, setEventLogs] = useState([
     { id: 1, time: '00:04:12', msg: 'Probe TLS handshake verified (TLS 1.3)', status: '200 OK', region: 'iad-1' },
     { id: 2, time: '00:04:14', msg: 'Zero-daemon HTTP status audit completed', status: '200 OK', region: 'fra-1' },
     { id: 3, time: '00:04:18', msg: 'Synthetic latency baseline within p95 SLA', status: '200 OK', region: 'sfo-1' },
   ]);
 
-  // Bonus: Konami Code Easter Egg
-  const [easterEggActive, setEasterEggActive] = useState(false);
+  const t = useTheme(darkMode);
 
   useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    document.documentElement.classList.toggle('dark', darkMode);
   }, [darkMode]);
 
-  // Konami Code Listener (↑ ↑ ↓ ↓ ← → ← → B A)
+  // Konami Code Easter Egg
   useEffect(() => {
-    const sequence = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+    const sequence = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
     let idx = 0;
     const handler = (e) => {
-      if (e.key === sequence[idx]) {
-        idx++;
-        if (idx === sequence.length) {
-          setEasterEggActive(true);
-          idx = 0;
-          setTimeout(() => setEasterEggActive(false), 5500);
-        }
-      } else {
-        idx = 0;
-      }
+      if (e.key === sequence[idx]) { idx++; if (idx === sequence.length) { setEasterEggActive(true); idx = 0; setTimeout(() => setEasterEggActive(false), 5500); } }
+      else idx = 0;
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
@@ -94,87 +95,30 @@ export default function App() {
     [endpoints, selectedEndpointId]
   );
 
-  // Micro-interaction 1: Inject Latency Regression
   const triggerLatencySpike = () => {
     setIsInjectingProbe(true);
     const spikeValue = 890;
-    setEndpoints((prev) =>
-      prev.map((ep) =>
-        ep.id === selectedEndpointId
-          ? {
-              ...ep,
-              latency: spikeValue,
-              history: [...ep.history.slice(1), spikeValue]
-            }
-          : ep
-      )
-    );
-    setEventLogs((prev) => [
-      {
-        id: Date.now(),
-        time: new Date().toLocaleTimeString(),
-        msg: `SLA Breached: High latency on ${activeEndpoint.path} (>500ms)`,
-        status: 'DEGRADED',
-        region: activeEndpoint.region
-      },
-      ...prev.slice(0, 4)
-    ]);
+    setEndpoints((prev) => prev.map((ep) => ep.id === selectedEndpointId ? { ...ep, latency: spikeValue, history: [...ep.history.slice(1), spikeValue] } : ep));
+    setEventLogs((prev) => [{ id: Date.now(), time: new Date().toLocaleTimeString(), msg: `SLA Breached: High latency on ${activeEndpoint.path} (>500ms)`, status: 'DEGRADED', region: activeEndpoint.region }, ...prev.slice(0, 4)]);
     setTimeout(() => setIsInjectingProbe(false), 450);
   };
 
-  // Micro-interaction 2: Inject HTTP 500 Outage
   const trigger500Outage = () => {
     setIsInjectingProbe(true);
-    setEndpoints((prev) =>
-      prev.map((ep) =>
-        ep.id === selectedEndpointId
-          ? {
-              ...ep,
-              status: 500,
-              latency: 12,
-              history: [...ep.history.slice(1), 12]
-            }
-          : ep
-      )
-    );
-    setEventLogs((prev) => [
-      {
-        id: Date.now(),
-        time: new Date().toLocaleTimeString(),
-        msg: `CRITICAL: 500 Internal Server Error detected on ${activeEndpoint.path}`,
-        status: 'DOWN',
-        region: activeEndpoint.region
-      },
-      ...prev.slice(0, 4)
-    ]);
+    setEndpoints((prev) => prev.map((ep) => ep.id === selectedEndpointId ? { ...ep, status: 500, latency: 12, history: [...ep.history.slice(1), 12] } : ep));
+    setEventLogs((prev) => [{ id: Date.now(), time: new Date().toLocaleTimeString(), msg: `CRITICAL: 500 Internal Server Error detected on ${activeEndpoint.path}`, status: 'DOWN', region: activeEndpoint.region }, ...prev.slice(0, 4)]);
     setTimeout(() => setIsInjectingProbe(false), 450);
   };
 
-  // 3D Overload Matrix Simulation
   const trigger3DOverload = () => {
-    setIsWarped(true);
-    setLoadFactor(100);
-    setTps(5680);
-    setLatency(186.4);
-    setTimeout(() => {
-      setIsWarped(false);
-      setLoadFactor(45);
-      setTps(1840);
-      setLatency(14.2);
-    }, 4500);
+    setIsWarped(true); setLoadFactor(100); setTps(5680); setLatency(186.4);
+    setTimeout(() => { setIsWarped(false); setLoadFactor(45); setTps(1840); setLatency(14.2); }, 4500);
   };
 
   const resetAll = () => {
-    setIsInjectingProbe(true);
-    setIsWarped(false);
-    setLoadFactor(45);
-    setTopology('sphere');
-    setTps(1840);
-    setLatency(14.2);
+    setIsInjectingProbe(true); setIsWarped(false); setLoadFactor(45); setTopology('sphere'); setTps(1840); setLatency(14.2);
     setEndpoints(INITIAL_ENDPOINTS);
-    setEventLogs([
-      { id: Date.now(), time: new Date().toLocaleTimeString(), msg: 'Telemetry probe pipeline re-synchronized to edge mesh', status: '200 OK', region: 'cluster-all' }
-    ]);
+    setEventLogs([{ id: Date.now(), time: new Date().toLocaleTimeString(), msg: 'Telemetry probe pipeline re-synchronized to edge mesh', status: '200 OK', region: 'cluster-all' }]);
     setTimeout(() => setIsInjectingProbe(false), 300);
   };
 
@@ -185,29 +129,37 @@ export default function App() {
   };
 
   return (
-    <div className={`min-h-screen font-sans selection:bg-blue-500/20 selection:text-blue-300 relative overflow-x-hidden flex flex-col justify-between transition-colors duration-300 ${
-      darkMode ? 'bg-[#0b0f19] text-slate-100' : 'bg-[#f8faff] text-slate-900'
-    }`}>
-      
-      {/* Ambient glow — adapts per theme */}
-      <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] rounded-full blur-[160px] pointer-events-none ${
-        darkMode ? 'bg-blue-600/10' : 'bg-blue-400/12'
-      }`}></div>
-      <div className={`absolute top-60 right-0 w-[400px] h-[400px] rounded-full blur-[120px] pointer-events-none ${
-        darkMode ? 'bg-indigo-600/5' : 'bg-indigo-400/8'
-      }`}></div>
+    <div
+      className="min-h-screen font-sans relative overflow-x-hidden flex flex-col justify-between transition-colors duration-300"
+      style={{ background: t.bg, color: t.text }}
+    >
+      {/* Ambient glows */}
+      <div
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[380px] rounded-full blur-[160px] pointer-events-none transition-all duration-500"
+        style={{ background: darkMode ? 'rgba(59,130,246,0.09)' : 'rgba(99,102,241,0.07)' }}
+      />
+      <div
+        className="absolute top-[60%] right-0 w-[350px] h-[350px] rounded-full blur-[120px] pointer-events-none"
+        style={{ background: darkMode ? 'rgba(99,102,241,0.05)' : 'rgba(59,130,246,0.06)' }}
+      />
 
-      {/* Subtle Grid */}
-      <div className={`absolute inset-0 bg-[size:3.5rem_3.5rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none ${
-        darkMode
-          ? 'bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)]'
-          : 'bg-[linear-gradient(to_right,rgba(100,116,139,0.07)_1px,transparent_1px),linear-gradient(to_bottom,rgba(100,116,139,0.07)_1px,transparent_1px)]'
-      }`}></div>
+      {/* Subtle dot grid */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: darkMode
+            ? 'radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px)'
+            : 'radial-gradient(rgba(15,23,42,0.07) 1px, transparent 1px)',
+          backgroundSize: '28px 28px',
+          maskImage: 'radial-gradient(ellipse 80% 60% at 50% 0%, black 60%, transparent 100%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 80% 60% at 50% 0%, black 60%, transparent 100%)',
+        }}
+      />
 
-      {/* Easter Egg Overlay Toast */}
+      {/* Easter Egg Toast */}
       {easterEggActive && (
-        <div className="fixed bottom-6 right-6 z-50 p-4 rounded-2xl bg-slate-900/95 border border-slate-700 shadow-2xl flex items-center gap-3 animate-bounce backdrop-blur-xl text-white">
-          <Terminal className="text-blue-400" size={22} />
+        <div className="fixed bottom-6 right-4 sm:right-6 z-50 p-4 rounded-2xl bg-slate-900/95 border border-slate-700 shadow-2xl flex items-center gap-3 animate-bounce backdrop-blur-xl text-white max-w-[320px]">
+          <Terminal className="text-blue-400 shrink-0" size={20} />
           <div>
             <p className="text-xs font-mono font-bold text-blue-400">BONUS PROTOCOL UNLOCKED</p>
             <p className="text-[11px] text-slate-300">Konami Sequence verified: Root compute telemetry active.</p>
@@ -215,200 +167,218 @@ export default function App() {
         </div>
       )}
 
-      {/* Glassmorphic Navbar */}
-      <header className={`sticky top-0 z-40 border-b backdrop-blur-xl transition-colors ${
-        darkMode ? 'border-slate-800/80 bg-[#0b0f19]/80' : 'border-slate-200/80 bg-white/90 shadow-sm'
-      }`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 shadow-sm">
-              <Cpu size={18} />
+      {/* ── NAVBAR ── */}
+      <header
+        className={`sticky top-0 z-40 border-b backdrop-blur-xl transition-all duration-300 ${t.header}`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+          {/* Logo */}
+          <div className="flex items-center gap-2.5 shrink-0">
+            <div className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-500 shadow-sm">
+              <Cpu size={17} />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-bold tracking-tight font-mono text-base dark:text-white text-slate-900">
+                <span className="font-bold tracking-tight font-mono text-sm sm:text-base" style={{ color: t.heading }}>
                   DevTelemetry
                 </span>
-                <span className="text-[9px] uppercase font-mono tracking-widest px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                <span
+                  className="hidden sm:inline text-[9px] uppercase font-mono tracking-widest px-2 py-0.5 rounded-md border"
+                  style={{ background: darkMode ? '#1e293b' : '#f1f5f9', color: t.subtext, borderColor: darkMode ? '#334155' : '#e2e8f0' }}
+                >
                   Agentless Edge
                 </span>
               </div>
             </div>
           </div>
 
-          <nav className="flex items-center gap-3 sm:gap-6">
-            <a href="#demo-live" className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">
+          {/* Nav links + actions */}
+          <nav className="flex items-center gap-2 sm:gap-5">
+            <a href="#demo-live" className="hidden sm:block text-sm font-medium transition hover:opacity-80" style={{ color: t.subtext }}>
               Live Sandbox
             </a>
-            <a href="#3d-core" className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">
-              3D Quantum Engine
+            <a href="#3d-core" className="hidden md:block text-sm font-medium transition hover:opacity-80" style={{ color: t.subtext }}>
+              3D Engine
             </a>
-            <a href="#architecture" className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition hidden md:inline">
+            <a href="#architecture" className="hidden lg:block text-sm font-medium transition hover:opacity-80" style={{ color: t.subtext }}>
               Architecture
             </a>
 
-            {/* Dark/Light Mode Switcher */}
+            {/* Theme toggle */}
             <button
               onClick={() => setDarkMode(!darkMode)}
-              className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
+              className="p-2 rounded-xl border transition cursor-pointer hover:opacity-80"
+              style={{ background: darkMode ? '#1e293b' : '#f1f5f9', borderColor: darkMode ? '#334155' : '#e2e8f0', color: t.subtext }}
               aria-label="Toggle Theme"
             >
-              {darkMode ? <Sun size={16} /> : <Moon size={16} />}
+              {darkMode ? <Sun size={15} /> : <Moon size={15} />}
             </button>
 
+            {/* GitHub */}
             <a
-              href="https://github.com/rishabhtcodes"
+              href="https://github.com/rishabhtcodes/devtelemetry"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-mono font-medium text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700 hover:text-slate-900 dark:hover:text-white transition shadow-sm"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-mono font-medium transition hover:opacity-80 shadow-sm"
+              style={{ background: darkMode ? '#0f172a' : '#ffffff', borderColor: darkMode ? '#334155' : '#e2e8f0', color: t.subtext }}
             >
-              <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
-                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
               </svg>
-              <span>GitHub</span>
+              <span className="hidden sm:inline">GitHub</span>
             </a>
           </nav>
         </div>
       </header>
 
-      {/* Main Content */}
+      {/* ── MAIN ── */}
       <main className="relative z-10 flex-grow max-w-7xl mx-auto px-4 sm:px-6 w-full py-10 sm:py-16 space-y-16 sm:space-y-24">
-        
-        {/* Hero Section */}
-        <section className="text-center max-w-4xl mx-auto pt-4">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-mono bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700/80 mb-6 backdrop-blur-md shadow-sm">
-            <Radio size={13} className="text-blue-500" />
+
+        {/* ── HERO ── */}
+        <section className="text-center max-w-4xl mx-auto">
+          {/* Pill badge */}
+          <div
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-mono border mb-6 backdrop-blur-md shadow-sm"
+            style={{ background: darkMode ? 'rgba(30,41,59,0.8)' : 'rgba(241,245,249,0.9)', borderColor: darkMode ? '#334155' : '#e2e8f0', color: t.subtext }}
+          >
+            <Radio size={12} className="text-blue-500" />
             <span>Deterministic Edge Observability • Zero Daemons</span>
           </div>
 
-          <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-slate-900 dark:text-white mb-6 leading-[1.15]">
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight mb-6 leading-[1.15]" style={{ color: t.heading }}>
             Visualizing Intelligence in <br />
             <span className="font-cursive-hollow text-5xl sm:text-7xl md:text-8xl inline-block mt-2">
               Three-Dimensional Space.
             </span>
           </h1>
 
-          <p className="text-sm sm:text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed mb-8">
+          <p className="text-sm sm:text-lg max-w-2xl mx-auto leading-relaxed mb-10" style={{ color: t.bodyText }}>
             Eliminate bulky runtime agent daemons. Probe microsecond endpoint latencies, 5xx outages, and quantum compute topologies in real-time WebGL space.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4">
             <a
               href="#demo-live"
-              className={`w-full sm:w-auto px-7 py-3.5 rounded-xl font-semibold shadow-md transition font-mono text-sm flex items-center justify-center gap-2 ${
-                darkMode
-                  ? 'bg-blue-600 hover:bg-blue-500 text-white'
-                  : 'bg-slate-900 hover:bg-slate-800 text-white'
-              }`}
+              className="px-7 py-3.5 rounded-xl font-semibold shadow-lg transition font-mono text-sm flex items-center justify-center gap-2 text-white hover:scale-[1.02] active:scale-[0.98]"
+              style={{ background: darkMode ? '#2563eb' : '#0f172a' }}
             >
               <Zap size={16} /> Test Live Sandbox
             </a>
-
             <button
               onClick={copyCurl}
-              className={`w-full sm:w-auto px-5 py-3.5 rounded-xl border font-mono text-xs transition flex items-center justify-center gap-2 shadow-sm cursor-pointer ${
-                darkMode
-                  ? 'border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-200'
-                  : 'border-slate-300 bg-white hover:bg-slate-50 text-slate-700'
-              }`}
+              className="px-5 py-3.5 rounded-xl border font-mono text-xs transition flex items-center justify-center gap-2 shadow-sm cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+              style={{ background: darkMode ? '#0f172a' : '#ffffff', borderColor: darkMode ? '#334155' : '#e2e8f0', color: t.subtext }}
             >
               {copiedCode ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
-              <span className="truncate max-w-[240px]">curl -s https://devtelemetry.io/probe</span>
+              <span className="truncate max-w-[220px] sm:max-w-xs">curl -s https://devtelemetry.io/probe</span>
             </button>
           </div>
         </section>
 
-        {/* Section 1: Live Interactive Product Demo (The Real Product) */}
+        {/* ── LIVE DEMO ── */}
         <section id="demo-live" className="scroll-mt-24">
-          <div className={`rounded-3xl border shadow-xl overflow-hidden backdrop-blur-xl ${
-            darkMode ? 'border-slate-800 bg-slate-900/90' : 'border-slate-200 bg-white'
-          }`}>
-            
-            {/* Terminal Header */}
-            <div className={`px-6 py-4 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
-              darkMode ? 'border-slate-800 bg-slate-950/80' : 'border-slate-200 bg-slate-50'
-            }`}>
+          <div
+            className={`rounded-3xl border shadow-xl overflow-hidden ${t.card}`}
+          >
+            {/* Terminal header bar */}
+            <div
+              className={`px-4 sm:px-6 py-4 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${t.border}`}
+              style={{ background: darkMode ? 'rgba(2,6,23,0.85)' : '#f8fafc' }}
+            >
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-rose-500"></div>
-                  <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-                  <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+                  <div className="w-3 h-3 rounded-full bg-rose-500" />
+                  <div className="w-3 h-3 rounded-full bg-amber-500" />
+                  <div className="w-3 h-3 rounded-full bg-emerald-500" />
                 </div>
-                <span className="text-xs font-mono text-slate-700 dark:text-slate-300 pl-2 border-l border-slate-300 dark:border-slate-800 font-semibold">
+                <span className="text-xs font-mono pl-2 border-l font-semibold" style={{ color: t.subtext, borderColor: darkMode ? '#334155' : '#cbd5e1' }}>
                   edge-probe-cluster // live-stream
                 </span>
               </div>
 
-              {/* Stress Ingestion Trigger Buttons */}
+              {/* Action buttons */}
               <div className="flex items-center gap-2 flex-wrap">
                 <button
                   onClick={triggerLatencySpike}
                   disabled={isInjectingProbe}
-                  className="px-3 py-1.5 rounded-lg border border-amber-300 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 text-xs font-mono font-medium hover:bg-amber-100 dark:hover:bg-amber-900/40 transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  className="px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50 border"
+                  style={{ background: darkMode ? 'rgba(120,53,15,0.3)' : '#fffbeb', borderColor: darkMode ? '#92400e' : '#fcd34d', color: darkMode ? '#fbbf24' : '#92400e' }}
                 >
-                  <Play size={12} /> Inject Latency
+                  <Play size={11} /> Inject Latency
                 </button>
                 <button
                   onClick={trigger500Outage}
                   disabled={isInjectingProbe}
-                  className="px-3 py-1.5 rounded-lg border border-rose-300 dark:border-rose-700/60 bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 text-xs font-mono font-medium hover:bg-rose-100 dark:hover:bg-rose-900/40 transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  className="px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50 border"
+                  style={{ background: darkMode ? 'rgba(127,29,29,0.3)' : '#fff1f2', borderColor: darkMode ? '#991b1b' : '#fca5a5', color: darkMode ? '#f87171' : '#b91c1c' }}
                 >
-                  <AlertTriangle size={12} /> Force 500 Outage
+                  <AlertTriangle size={11} /> Force 500 Outage
                 </button>
                 <button
                   onClick={resetAll}
                   disabled={isInjectingProbe}
-                  className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-mono font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  className="px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50 border"
+                  style={{ background: darkMode ? '#1e293b' : '#f1f5f9', borderColor: darkMode ? '#334155' : '#e2e8f0', color: t.subtext }}
                 >
-                  <RotateCcw size={12} className={isInjectingProbe ? 'animate-spin' : ''} /> Reset
+                  <RotateCcw size={11} className={isInjectingProbe ? 'animate-spin' : ''} /> Reset
                 </button>
               </div>
             </div>
 
-            {/* Split Console Grid */}
-            <div className={`grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x ${
-              darkMode ? 'divide-slate-800' : 'divide-slate-200'
-            }`}>
-              
-              {/* Left Column: Monitored Endpoints List */}
+            {/* Console grid */}
+            <div className={`grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x ${t.divide}`}>
+
+              {/* Left: Endpoint list */}
               <div className="lg:col-span-5 p-4 sm:p-6 space-y-3">
-                <p className="text-xs font-mono uppercase tracking-wider text-slate-600 dark:text-slate-400 font-semibold mb-2">
+                <p className="text-xs font-mono uppercase tracking-wider font-semibold mb-3" style={{ color: t.muted }}>
                   Observed Targets ({endpoints.length})
                 </p>
                 {endpoints.map((ep) => (
                   <button
                     key={ep.id}
                     onClick={() => setSelectedEndpointId(ep.id)}
-                    className={`w-full text-left p-3.5 rounded-xl border transition flex items-center justify-between cursor-pointer ${
-                      selectedEndpointId === ep.id
-                        ? 'border-blue-500 bg-blue-50/80 dark:bg-blue-950/30 shadow-sm'
-                        : 'border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/40 hover:border-slate-300 dark:hover:border-slate-700'
+                    className={`w-full text-left p-3.5 rounded-xl border transition-all flex items-center justify-between cursor-pointer ${
+                      selectedEndpointId === ep.id ? 'border-blue-500' : ''
                     }`}
+                    style={{
+                      background: selectedEndpointId === ep.id
+                        ? darkMode ? 'rgba(30,58,138,0.25)' : 'rgba(239,246,255,0.9)'
+                        : darkMode ? 'rgba(15,23,42,0.5)' : 'rgba(248,250,252,0.8)',
+                      borderColor: selectedEndpointId === ep.id ? '#3b82f6' : darkMode ? '#1e293b' : '#e2e8f0',
+                      boxShadow: selectedEndpointId === ep.id ? '0 0 0 1px rgba(59,130,246,0.2)' : 'none',
+                    }}
                   >
-                    <div className="space-y-1">
+                    <div className="space-y-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
-                          ep.method === 'POST'
-                            ? 'bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700'
-                            : 'bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
-                        }`}>
+                        <span
+                          className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded shrink-0 border"
+                          style={ep.method === 'POST'
+                            ? { background: darkMode ? '#1e293b' : '#f1f5f9', color: darkMode ? '#cbd5e1' : '#475569', borderColor: darkMode ? '#334155' : '#e2e8f0' }
+                            : { background: darkMode ? 'rgba(30,58,138,0.3)' : '#eff6ff', color: darkMode ? '#93c5fd' : '#1d4ed8', borderColor: darkMode ? '#1e3a8a' : '#bfdbfe' }
+                          }
+                        >
                           {ep.method}
                         </span>
-                        <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">{ep.name}</span>
+                        <span className="text-xs font-semibold truncate" style={{ color: t.heading }}>{ep.name}</span>
                       </div>
-                      <p className="text-[11px] font-mono text-slate-600 dark:text-slate-400">{ep.path}</p>
+                      <p className="text-[11px] font-mono truncate" style={{ color: t.muted }}>{ep.path}</p>
                     </div>
 
-                    <div className="text-right space-y-1">
-                      <span className={`inline-flex items-center gap-1 text-[11px] font-mono font-semibold px-2 py-0.5 rounded-full ${
-                        ep.status === 200
-                          ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60'
-                          : 'bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60'
-                      }`}>
+                    <div className="text-right space-y-1 shrink-0 ml-2">
+                      <span
+                        className="inline-flex items-center gap-1 text-[11px] font-mono font-semibold px-2 py-0.5 rounded-full border"
+                        style={ep.status === 200
+                          ? { background: darkMode ? 'rgba(5,46,22,0.6)' : '#f0fdf4', color: darkMode ? '#6ee7b7' : '#15803d', borderColor: darkMode ? '#166534' : '#bbf7d0' }
+                          : { background: darkMode ? 'rgba(69,10,10,0.6)' : '#fff1f2', color: darkMode ? '#fca5a5' : '#b91c1c', borderColor: darkMode ? '#7f1d1d' : '#fca5a5' }
+                        }
+                      >
                         {ep.status === 200 ? <CheckCircle2 size={10} /> : <AlertTriangle size={10} />}
                         {ep.status}
                       </span>
-                      <p className={`text-[11px] font-mono font-medium ${ep.latency > 300 ? 'text-amber-700 dark:text-amber-400 font-bold' : 'text-slate-600 dark:text-slate-400'}`}>
+                      <p
+                        className="text-[11px] font-mono font-medium"
+                        style={{ color: ep.latency > 300 ? '#f59e0b' : t.muted }}
+                      >
                         {ep.latency}ms
                       </p>
                     </div>
@@ -416,61 +386,69 @@ export default function App() {
                 ))}
               </div>
 
-              {/* Right Column: Deep Inspector Panel */}
-              <div className="lg:col-span-7 p-4 sm:p-6 flex flex-col justify-between space-y-6">
+              {/* Right: Inspector panel */}
+              <div className="lg:col-span-7 p-4 sm:p-6 flex flex-col justify-between gap-6">
                 <div>
-                  <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
-                    <div>
-                      <h3 className="text-sm font-bold text-slate-900 dark:text-white font-mono flex items-center gap-2">
-                        <Server size={14} className="text-blue-500" />
+                  <div className="flex items-start justify-between pb-4 border-b gap-4" style={{ borderColor: darkMode ? '#1e293b' : '#e2e8f0' }}>
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-bold font-mono flex items-center gap-2 truncate" style={{ color: t.heading }}>
+                        <Server size={13} className="text-blue-500 shrink-0" />
                         {activeEndpoint.path}
                       </h3>
-                      <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-                        Region: <span className="font-mono font-medium text-slate-900 dark:text-slate-200">{activeEndpoint.region}</span> | Payload: <span className="font-mono font-medium text-slate-900 dark:text-slate-200">{activeEndpoint.payload}</span>
+                      <p className="text-xs mt-0.5" style={{ color: t.label }}>
+                        Region: <span className="font-mono font-medium" style={{ color: t.heading }}>{activeEndpoint.region}</span>
+                        {' '}| Payload: <span className="font-mono font-medium" style={{ color: t.heading }}>{activeEndpoint.payload}</span>
                       </p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-xs text-slate-500 dark:text-slate-400">RTT Latency</p>
-                      <p className="text-lg font-mono font-bold text-blue-600 dark:text-blue-400">{activeEndpoint.latency} ms</p>
+                    <div className="text-right shrink-0">
+                      <p className="text-xs" style={{ color: t.muted }}>RTT Latency</p>
+                      <p className="text-lg font-mono font-bold text-blue-500">{activeEndpoint.latency} ms</p>
                     </div>
                   </div>
 
-                  {/* Latency History Waveform */}
-                  <div className="mt-6">
-                    <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400 font-mono mb-2">
+                  {/* Latency waveform */}
+                  <div className="mt-5">
+                    <div className="flex justify-between text-xs font-mono mb-2" style={{ color: t.label }}>
                       <span>Latency History (Last 6 Probes)</span>
                       <span>SLA: &lt;100ms</span>
                     </div>
-                    <div className="h-20 w-full flex items-end gap-2 bg-slate-100 dark:bg-slate-950/60 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                    <div
+                      className="h-20 w-full flex items-end gap-1.5 p-3 rounded-xl border"
+                      style={{ background: darkMode ? 'rgba(2,6,23,0.6)' : '#f8fafc', borderColor: darkMode ? '#1e293b' : '#e2e8f0' }}
+                    >
                       {activeEndpoint.history.map((val, idx) => {
                         const heightPct = Math.min(100, Math.max(15, (val / 900) * 100));
                         const isHigh = val > 300;
                         return (
                           <div key={idx} className="flex-1 flex flex-col items-center gap-1 h-full justify-end">
                             <div
-                              style={{ height: `${heightPct}%` }}
-                              className={`w-full rounded-sm transition-all duration-300 ${
-                                isHigh ? 'bg-amber-500' : 'bg-blue-600 dark:bg-blue-500'
-                              }`}
-                            ></div>
-                            <span className="text-[9px] font-mono text-slate-600 dark:text-slate-400 font-medium">{val}m</span>
+                              style={{ height: `${heightPct}%`, background: isHigh ? '#f59e0b' : '#3b82f6' }}
+                              className="w-full rounded-sm transition-all duration-300"
+                            />
+                            <span className="text-[9px] font-mono" style={{ color: t.muted }}>{val}m</span>
                           </div>
                         );
                       })}
                     </div>
                   </div>
 
-                  {/* Realtime Event Stream */}
-                  <div className="mt-6">
-                    <p className="text-xs font-mono uppercase tracking-wider text-slate-600 dark:text-slate-400 font-semibold mb-2 flex items-center gap-1.5">
-                      <Terminal size={12} /> Live Audit Log
+                  {/* Live audit log */}
+                  <div className="mt-5">
+                    <p className="text-xs font-mono uppercase tracking-wider font-semibold mb-2 flex items-center gap-1.5" style={{ color: t.label }}>
+                      <Terminal size={11} /> Live Audit Log
                     </p>
-                    <div className="bg-slate-100 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800 font-mono text-[11px] space-y-1.5">
+                    <div
+                      className="p-3 rounded-xl border font-mono text-[11px] space-y-2"
+                      style={{ background: darkMode ? '#020617' : '#f8fafc', borderColor: darkMode ? '#1e293b' : '#e2e8f0' }}
+                    >
                       {eventLogs.map((log) => (
-                        <div key={log.id} className="flex items-center justify-between text-slate-800 dark:text-slate-200">
-                          <span className="text-slate-500 dark:text-slate-500">[{log.time}]</span>
-                          <span className="truncate max-w-[200px] sm:max-w-xs">{log.msg}</span>
-                          <span className={log.status === '200 OK' ? 'text-emerald-700 dark:text-emerald-400 font-semibold' : 'text-rose-700 dark:text-rose-400 font-bold'}>
+                        <div key={log.id} className="flex items-center gap-2 sm:gap-3 min-w-0">
+                          <span className="shrink-0" style={{ color: t.muted }}>[{log.time}]</span>
+                          <span className="truncate flex-1" style={{ color: t.subtext }}>{log.msg}</span>
+                          <span
+                            className="shrink-0 font-semibold"
+                            style={{ color: log.status === '200 OK' ? (darkMode ? '#34d399' : '#15803d') : (darkMode ? '#f87171' : '#b91c1c') }}
+                          >
                             {log.status}
                           </span>
                         </div>
@@ -479,128 +457,101 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs font-mono text-slate-600 dark:text-slate-400">
-                  <span className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-medium">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                <div className="flex items-center justify-between text-xs font-mono pt-4 border-t" style={{ borderColor: darkMode ? '#1e293b' : '#e2e8f0', color: t.muted }}>
+                  <span className="flex items-center gap-1.5" style={{ color: darkMode ? '#34d399' : '#15803d' }}>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
                     Synthetics Active
                   </span>
                   <span>Zero Memory Overhead</span>
                 </div>
               </div>
-
             </div>
           </div>
         </section>
 
-        {/* Section 2: 3D Quantum Topology & WebGL Engine */}
+        {/* ── 3D ENGINE ── */}
         <section id="3d-core" className="scroll-mt-24">
-          <div className="text-center max-w-2xl mx-auto mb-8">
-            <h2 className="text-2xl sm:text-3xl font-black font-mono tracking-tight text-slate-900 dark:text-white">
+          <div className="text-center max-w-2xl mx-auto mb-10">
+            <h2 className="text-2xl sm:text-3xl font-black font-mono tracking-tight" style={{ color: t.heading }}>
               Interactive 3D WebGL Engine
             </h2>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-2">
+            <p className="text-xs sm:text-sm mt-2" style={{ color: t.bodyText }}>
               Hardware-accelerated vertex shaders dynamically reacting to network entropy.
             </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            
-            {/* 3D Canvas */}
+            {/* Canvas + stats */}
             <div className="lg:col-span-8 space-y-4">
               <NeuralCanvas loadFactor={loadFactor} isWarped={isWarped} topology={topology} darkMode={darkMode} />
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className={`p-3.5 rounded-xl border shadow-sm ${
-                  darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200'
-                }`}>
-                  <p className="text-[10px] font-mono uppercase text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                    <TrendingUp size={12} className="text-blue-500" /> Token Velocity
-                  </p>
-                  <p className="text-base font-mono font-bold text-slate-900 dark:text-white mt-1">{tps} <span className="text-xs text-slate-400 font-normal">tps</span></p>
-                </div>
-
-                <div className={`p-3.5 rounded-xl border shadow-sm ${
-                  darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200'
-                }`}>
-                  <p className="text-[10px] font-mono uppercase text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                    <Activity size={12} className="text-indigo-500" /> Edge Latency
-                  </p>
-                  <p className="text-base font-mono font-bold text-blue-600 dark:text-blue-400 mt-1">{latency} <span className="text-xs text-slate-400 font-normal">ms</span></p>
-                </div>
-
-                <div className={`p-3.5 rounded-xl border shadow-sm ${
-                  darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200'
-                }`}>
-                  <p className="text-[10px] font-mono uppercase text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                    <Disc size={12} className="text-slate-400" /> Mesh Geometry
-                  </p>
-                  <p className="text-base font-mono font-bold text-slate-900 dark:text-white mt-1 capitalize">{topology}</p>
-                </div>
-
-                <div className={`p-3.5 rounded-xl border shadow-sm ${
-                  darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200'
-                }`}>
-                  <p className="text-[10px] font-mono uppercase text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                    <ShieldCheck size={12} className={isWarped ? 'text-rose-500' : 'text-emerald-500'} /> Core Health
-                  </p>
-                  <p className={`text-base font-mono font-bold mt-1 ${isWarped ? 'text-rose-500' : 'text-emerald-600 dark:text-emerald-400'}`}>
-                    {isWarped ? 'OVERLOAD' : 'NOMINAL'}
-                  </p>
-                </div>
+                {[
+                  { icon: <TrendingUp size={11} className="text-blue-500" />, label: 'Token Velocity', value: tps, unit: 'tps', color: t.heading },
+                  { icon: <Activity size={11} className="text-indigo-500" />, label: 'Edge Latency', value: latency, unit: 'ms', color: '#3b82f6' },
+                  { icon: <Disc size={11} style={{ color: t.muted }} />, label: 'Mesh Geometry', value: topology, unit: '', color: t.heading, capitalize: true },
+                  { icon: <ShieldCheck size={11} className={isWarped ? 'text-rose-500' : 'text-emerald-500'} />, label: 'Core Health', value: isWarped ? 'OVERLOAD' : 'NOMINAL', unit: '', color: isWarped ? '#ef4444' : (darkMode ? '#34d399' : '#15803d') },
+                ].map((stat, i) => (
+                  <div
+                    key={i}
+                    className="p-3.5 rounded-xl border shadow-sm"
+                    style={{ background: darkMode ? 'rgba(15,23,42,0.7)' : '#ffffff', borderColor: darkMode ? '#1e293b' : '#e2e8f0' }}
+                  >
+                    <p className="text-[10px] font-mono uppercase flex items-center gap-1 mb-1" style={{ color: t.muted }}>
+                      {stat.icon} {stat.label}
+                    </p>
+                    <p className="text-base font-mono font-bold" style={{ color: stat.color }}>
+                      {stat.value}{stat.unit && <span className="text-xs font-normal ml-1" style={{ color: t.muted }}>{stat.unit}</span>}
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* 3D Controls */}
-            <div className="lg:col-span-4 space-y-4">
-              <div className={`p-6 rounded-2xl border shadow-md space-y-6 ${
-                darkMode ? 'border-slate-800 bg-slate-900/80' : 'border-slate-200 bg-white'
-              }`}>
-                
-                <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-                      <Sliders size={16} />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-bold text-slate-900 dark:text-white font-mono">Shader Controls</h3>
-                      <p className="text-[11px] text-slate-600 dark:text-slate-400">Parametric Modulation</p>
-                    </div>
+            {/* Controls panel */}
+            <div className="lg:col-span-4">
+              <div
+                className="p-5 sm:p-6 rounded-2xl border shadow-md space-y-6"
+                style={{ background: darkMode ? 'rgba(15,23,42,0.85)' : '#ffffff', borderColor: darkMode ? '#1e293b' : '#e2e8f0' }}
+              >
+                <div className="flex items-center gap-3 pb-4 border-b" style={{ borderColor: darkMode ? '#1e293b' : '#e2e8f0' }}>
+                  <div className="p-2 rounded-lg bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                    <Sliders size={15} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold font-mono" style={{ color: t.heading }}>Shader Controls</h3>
+                    <p className="text-[11px]" style={{ color: t.muted }}>Parametric Modulation</p>
                   </div>
                 </div>
 
-                {/* Topology Switching */}
+                {/* Topology selector */}
                 <div className="space-y-2">
-                  <label className="text-xs font-mono font-semibold text-slate-800 dark:text-slate-200">Topology Shape</label>
+                  <label className="text-xs font-mono font-semibold" style={{ color: t.subtext }}>Topology Shape</label>
                   <div className="grid grid-cols-2 gap-2">
-                    <button
-                      onClick={() => setTopology('sphere')}
-                      className={`py-2 px-3 rounded-lg font-mono text-xs border transition flex items-center justify-center gap-2 cursor-pointer ${
-                        topology === 'sphere'
-                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/20 text-blue-800 dark:text-blue-300 font-semibold shadow-sm'
-                          : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 text-slate-700 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900'
-                      }`}
-                    >
-                      <Boxes size={14} /> Quantum Sphere
-                    </button>
-
-                    <button
-                      onClick={() => setTopology('knot')}
-                      className={`py-2 px-3 rounded-lg font-mono text-xs border transition flex items-center justify-center gap-2 cursor-pointer ${
-                        topology === 'knot'
-                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/20 text-blue-800 dark:text-blue-300 font-semibold shadow-sm'
-                          : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 text-slate-700 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900'
-                      }`}
-                    >
-                      <Disc size={14} /> Torus Knot
-                    </button>
+                    {[
+                      { key: 'sphere', label: 'Quantum Sphere', icon: <Boxes size={13} /> },
+                      { key: 'knot', label: 'Torus Knot', icon: <Disc size={13} /> },
+                    ].map(({ key, label, icon }) => (
+                      <button
+                        key={key}
+                        onClick={() => setTopology(key)}
+                        className="py-2 px-3 rounded-lg font-mono text-xs border transition flex items-center justify-center gap-1.5 cursor-pointer"
+                        style={topology === key
+                          ? { background: darkMode ? 'rgba(37,99,235,0.2)' : '#eff6ff', borderColor: '#3b82f6', color: darkMode ? '#93c5fd' : '#1d4ed8', fontWeight: 600 }
+                          : { background: darkMode ? 'rgba(2,6,23,0.5)' : '#f8fafc', borderColor: darkMode ? '#1e293b' : '#e2e8f0', color: t.muted }
+                        }
+                      >
+                        {icon} {label}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
-                {/* Tensor Load Slider */}
+                {/* Tensor load slider */}
                 <div className="space-y-3">
-                  <div className="flex justify-between text-xs font-mono text-slate-800 dark:text-slate-200">
-                    <span className="flex items-center gap-1.5"><Zap size={13} className="text-blue-500" /> Tensor Load</span>
-                    <span className="text-blue-600 dark:text-blue-400 font-bold font-mono">{loadFactor}%</span>
+                  <div className="flex justify-between text-xs font-mono" style={{ color: t.subtext }}>
+                    <span className="flex items-center gap-1.5"><Zap size={12} className="text-blue-500" /> Tensor Load</span>
+                    <span className="text-blue-500 font-bold">{loadFactor}%</span>
                   </div>
                   <input
                     type="range"
@@ -608,92 +559,81 @@ export default function App() {
                     max="100"
                     value={loadFactor}
                     onChange={(e) => setLoadFactor(Number(e.target.value))}
-                    className="w-full accent-blue-600 bg-slate-200 dark:bg-slate-950 h-2 rounded-lg cursor-pointer border border-slate-300 dark:border-slate-800"
+                    className="w-full h-2 rounded-lg cursor-pointer accent-blue-500"
+                    style={{ background: darkMode ? '#0f172a' : '#e2e8f0' }}
                   />
                 </div>
 
-                {/* Stress Inject Action */}
+                {/* Overload button */}
                 <button
                   onClick={trigger3DOverload}
                   disabled={isWarped}
-                  className={`w-full py-3 px-4 rounded-xl text-xs font-mono font-bold tracking-wider transition flex items-center justify-center gap-2 cursor-pointer shadow-sm disabled:opacity-50 text-white ${
-                    darkMode ? 'bg-rose-600 hover:bg-rose-500' : 'bg-slate-900 hover:bg-slate-800'
-                  }`}
+                  className="w-full py-3 px-4 rounded-xl text-xs font-mono font-bold tracking-wider transition flex items-center justify-center gap-2 cursor-pointer shadow-sm disabled:opacity-50 text-white hover:scale-[1.02] active:scale-[0.98]"
+                  style={{ background: darkMode ? '#dc2626' : '#0f172a' }}
                 >
-                  <Flame size={16} /> Inject Matrix Overload Stress
+                  <Flame size={15} /> Inject Matrix Overload Stress
                 </button>
               </div>
             </div>
-
           </div>
         </section>
 
-        {/* Section 3: Architecture Pillars */}
-        <section id="architecture" className="pt-8 border-t border-slate-200 dark:border-slate-800">
+        {/* ── ARCHITECTURE ── */}
+        <section id="architecture" className="scroll-mt-24 pt-8 border-t" style={{ borderColor: darkMode ? '#1e293b' : '#e2e8f0' }}>
           <div className="text-center max-w-2xl mx-auto mb-10">
-            <h2 className="text-2xl font-bold font-mono text-slate-900 dark:text-white">Architectural Principles</h2>
-            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Direct deterministic telemetry without marketing noise.</p>
+            <h2 className="text-2xl sm:text-3xl font-bold font-mono" style={{ color: t.heading }}>Architectural Principles</h2>
+            <p className="text-xs sm:text-sm mt-2" style={{ color: t.bodyText }}>Direct deterministic telemetry without marketing noise.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className={`p-6 rounded-2xl border shadow-sm backdrop-blur-xl ${
-              darkMode ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-white'
-            }`}>
-              <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 w-fit mb-4">
-                <Layers size={22} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 sm:gap-6">
+            {[
+              {
+                icon: <Layers size={20} />,
+                iconStyle: { background: 'rgba(59,130,246,0.1)', borderColor: 'rgba(59,130,246,0.25)', color: '#3b82f6' },
+                title: 'Agentless External Ingestion',
+                body: 'Health probes fire externally from multi-region cloud edge zones without injecting heavy daemon binaries or intrusive packages into your codebase.',
+              },
+              {
+                icon: <Sparkles size={20} />,
+                iconStyle: { background: darkMode ? '#1e293b' : '#f1f5f9', borderColor: darkMode ? '#334155' : '#e2e8f0', color: t.subtext },
+                title: 'Zero Payload Leakage',
+                body: 'Stateless inspections ensure customer cookies, authorization tokens, and private database payloads are never recorded or stored.',
+              },
+              {
+                icon: <Code2 size={20} />,
+                iconStyle: { background: 'rgba(99,102,241,0.1)', borderColor: 'rgba(99,102,241,0.25)', color: '#6366f1' },
+                title: 'WebGL 3D Topology',
+                body: 'Direct Three.js parametric mesh and particle rendering running asynchronously on the GPU without blocking the React state thread.',
+              },
+            ].map((card, i) => (
+              <div
+                key={i}
+                className="p-6 rounded-2xl border shadow-sm backdrop-blur-sm transition hover:scale-[1.01]"
+                style={{ background: darkMode ? 'rgba(15,23,42,0.6)' : '#ffffff', borderColor: darkMode ? '#1e293b' : '#e2e8f0' }}
+              >
+                <div className="p-3 rounded-xl border w-fit mb-4" style={card.iconStyle}>
+                  {card.icon}
+                </div>
+                <h3 className="font-bold text-base font-mono mb-2 flex items-center justify-between" style={{ color: t.heading }}>
+                  <span>{card.title}</span>
+                  <ArrowUpRight size={14} style={{ color: t.muted }} />
+                </h3>
+                <p className="text-xs leading-relaxed" style={{ color: t.bodyText }}>{card.body}</p>
               </div>
-              <h3 className="font-bold text-base text-slate-900 dark:text-white mb-2 font-mono flex items-center justify-between">
-                <span>Agentless External Ingestion</span>
-                <ArrowUpRight size={14} className="text-slate-400" />
-              </h3>
-              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                Health probes fire externally from multi-region cloud edge zones without injecting heavy daemon binaries or intrusive packages into your codebase.
-              </p>
-            </div>
-
-            <div className={`p-6 rounded-2xl border shadow-sm backdrop-blur-xl ${
-              darkMode ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-white'
-            }`}>
-              <div className={`p-3 rounded-xl border w-fit mb-4 ${
-                darkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
-              }`}>
-                <Sparkles size={22} />
-              </div>
-              <h3 className="font-bold text-base text-slate-900 dark:text-white mb-2 font-mono flex items-center justify-between">
-                <span>Zero Payload Leakage</span>
-                <ArrowUpRight size={14} className="text-slate-400" />
-              </h3>
-              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                Stateless inspections ensure customer cookies, authorization tokens, and private database payloads are never recorded or stored.
-              </p>
-            </div>
-
-            <div className={`p-6 rounded-2xl border shadow-sm backdrop-blur-xl ${
-              darkMode ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-white'
-            }`}>
-              <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 w-fit mb-4">
-                <Code2 size={22} />
-              </div>
-              <h3 className="font-bold text-base text-slate-900 dark:text-white mb-2 font-mono flex items-center justify-between">
-                <span>WebGL 3D Topology</span>
-                <ArrowUpRight size={14} className="text-slate-400" />
-              </h3>
-              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                Direct Three.js parametric mesh and particle rendering running asynchronously on the GPU without blocking the React state thread.
-              </p>
-            </div>
+            ))}
           </div>
         </section>
 
       </main>
 
-      {/* Footer */}
-      <footer className={`border-t py-8 text-center text-xs font-mono ${
-        darkMode ? 'border-slate-800/80 bg-slate-950 text-slate-500' : 'border-slate-200 bg-white text-slate-500'
-      }`}>
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+      {/* ── FOOTER ── */}
+      <footer
+        className="border-t py-8 text-center text-xs font-mono transition-colors"
+        style={{ borderColor: darkMode ? '#1e293b' : '#e2e8f0', background: darkMode ? '#020617' : '#ffffff', color: t.muted }}
+      >
+        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p>© 2026 DevTelemetry // Crafted for Acdyon Technologies Frontend Challenge.</p>
-          <p className="text-slate-600 dark:text-slate-400">Bonus Keybind: Press ↑ ↑ ↓ ↓ ← → ← → B A on keyboard.</p>
+          <p style={{ color: t.label }}>Bonus: Press ↑ ↑ ↓ ↓ ← → ← → B A</p>
         </div>
       </footer>
     </div>
