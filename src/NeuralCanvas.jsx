@@ -1,7 +1,20 @@
-import { useRef, useMemo } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { useRef, useMemo, useEffect } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Float, Sphere, Torus, MeshDistortMaterial, MeshWobbleMaterial, Points, PointMaterial } from '@react-three/drei';
 import * as THREE from 'three';
+
+// Reactively updates WebGL clear color when darkMode/isWarped changes
+function CanvasBackground({ darkMode, isWarped }) {
+  const { gl } = useThree();
+  useEffect(() => {
+    let color;
+    if (isWarped) color = '#080010';
+    else if (darkMode) color = '#080e1c';
+    else color = '#eef2ff'; // soft indigo-white for light mode
+    gl.setClearColor(color, 1);
+  }, [gl, darkMode, isWarped]);
+  return null;
+}
 
 // Generate deterministic subtle particle field positions once outside render
 const PARTICLE_COUNT = 450;
@@ -183,13 +196,14 @@ function SingularityCore({ isWarped, darkMode }) {
 }
 
 export default function NeuralCanvas({ loadFactor, isWarped, topology = 'sphere', darkMode = true }) {
-  // Canvas bg: dark mode = deep slate, light mode = clean off-white
-  const canvasBg = darkMode ? '#0b1020' : '#f1f5f9';
   const ringColorA = isWarped ? '#fca5a5' : (darkMode ? '#64748b' : '#3b82f6');
   const ringColorB = isWarped ? '#f87171' : (darkMode ? '#475569' : '#6366f1');
 
   return (
-    <div className="w-full h-[460px] sm:h-[520px] cursor-grab active:cursor-grabbing relative rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800/80 shadow-lg group transition">
+    <div
+      className="w-full h-[460px] sm:h-[520px] cursor-grab active:cursor-grabbing relative rounded-2xl overflow-hidden shadow-lg group transition"
+      style={{ border: `1px solid ${darkMode ? '#1e293b' : '#c7d2fe'}` }}
+    >
       
       {/* HUD Top Status Bar */}
       <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between pointer-events-none">
@@ -211,19 +225,19 @@ export default function NeuralCanvas({ loadFactor, isWarped, topology = 'sphere'
         </div>
       </div>
 
-      {/* Clean Studio Lighting Context */}
+      {/* Canvas with reactive background updater */}
       <Canvas
         camera={{ position: [0, 0, 5.0], fov: 46 }}
         className="w-full h-full"
         gl={{ alpha: false }}
-        onCreated={({ gl }) => {
-          gl.setClearColor(canvasBg, 1);
-        }}
       >
+        {/* Reactive background — updates on every darkMode toggle */}
+        <CanvasBackground darkMode={darkMode} isWarped={isWarped} />
+
         {/* Adaptive Studio Lighting */}
-        <ambientLight intensity={darkMode ? 0.9 : 1.4} />
-        <directionalLight position={[6, 8, 5]} intensity={darkMode ? 1.5 : 2.0} color={darkMode ? '#f8fafc' : '#ffffff'} />
-        <directionalLight position={[-6, -4, -3]} intensity={darkMode ? 0.6 : 0.8} color={darkMode ? '#94a3b8' : '#e0e7ff'} />
+        <ambientLight intensity={darkMode ? 0.9 : 1.6} />
+        <directionalLight position={[6, 8, 5]} intensity={darkMode ? 1.5 : 2.2} color={darkMode ? '#f8fafc' : '#ffffff'} />
+        <directionalLight position={[-6, -4, -3]} intensity={darkMode ? 0.6 : 1.0} color={darkMode ? '#94a3b8' : '#c7d2fe'} />
 
         {/* Ambient Subtle Particles */}
         <ParticleMatrix isWarped={isWarped} darkMode={darkMode} />
